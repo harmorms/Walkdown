@@ -1,0 +1,2459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Walkdown Beta</title>
+<style>
+:root{--bg:#f4f5f2;--fg:#1c2321;--card:#e6e9e3;--ac:#0f6b5c;--ln:#c5cbc2}
+@media(prefers-color-scheme:dark){:root{--bg:#171b19;--fg:#e8ece6;--card:#232925;--ac:#5fc4ae;--ln:#39423c}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;font:15px/1.4 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+header{padding:10px 12px 0}
+h1{font-size:17px;margin:0}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.hl{display:flex;align-items:center;gap:8px;min-width:0}
+#backBtn{padding:6px 10px;font-weight:700;white-space:nowrap}
+#sheetTitle{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+#gpsBtn{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
+#gpsBtn.on{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+#gpsBtn.bad{background:#d64545;color:#fff;border-color:#d64545}
+nav{display:flex;gap:4px}
+nav[hidden]{display:none}
+nav button{flex:1;padding:9px 2px;border:1px solid var(--ln);border-bottom:0;border-radius:8px 8px 0 0;background:var(--card);color:var(--fg);font:inherit;font-size:13.5px;min-width:0}
+nav button.on{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+#ctl{padding:12px;background:var(--card);border-top:2px solid var(--ac)}
+#ctl>div{display:grid;gap:8px}
+#ctl [hidden]{display:none}
+.stack{display:grid;gap:8px}
+button,select,input[type=text]{font:inherit;padding:9px 12px;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--fg)}
+button.pri{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+button.danger{border-color:#d64545;color:#d64545}
+button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row input[type=text]{flex:1;min-width:0}
+.h{margin:0;opacity:.7;font-size:13px}
+#wrap{overflow:auto;max-height:58vh;border-bottom:1px solid var(--ln);background:#888}
+#inner{position:relative;width:100%}
+#inner canvas{display:block;width:100%;height:auto}
+#ov{position:absolute;inset:0;height:100%!important;touch-action:manipulation}
+.item{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;padding:8px;border-left:6px solid;background:var(--bg);border-radius:4px}
+.item .row{grid-column:1/-1}
+.item small{opacity:.7}
+.chip{padding:6px 11px;border-radius:999px;font-size:13px}
+.chip.on{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+.chip.danger.on{background:#d64545;border-color:#d64545;color:#fff}
+#progBar{padding:6px 12px;background:var(--bg)}
+#progTrack{height:12px;background:var(--card);border:1px solid var(--ln);border-radius:6px;overflow:hidden;position:relative}
+#progPend,#progOff{position:absolute;left:0;top:0;bottom:0;width:0}
+#progPend{background:var(--ac);opacity:.35}
+#progOff{background:var(--ac)}
+details{border:1px solid var(--ln);border-radius:8px;padding:8px 10px;background:var(--bg)}
+summary{cursor:pointer;font-weight:600}
+details>.row,details>p,details>button,details>div{margin-top:8px}
+#quick{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--card);border-top:2px solid var(--ac);z-index:50}
+#quick[hidden],#issueBox[hidden],#itemBox[hidden],#pdfBox[hidden],#projForm[hidden],#toast[hidden],#rptView[hidden]{display:none}
+#rptView{position:fixed;inset:0;z-index:150;background:var(--bg);display:flex;flex-direction:column}
+#rptView .bar{display:flex;gap:8px;padding:8px;flex-wrap:wrap;background:var(--card);border-bottom:2px solid var(--ac)}
+#rptFrame{flex:1;border:0;background:#fff;width:100%}
+#quick button{flex:1;min-height:54px;font-size:15px;font-weight:700;border-width:2px;padding:6px 2px;white-space:nowrap}
+body.hasQuick{padding-bottom:84px}
+#toast{position:fixed;left:12px;right:12px;bottom:86px;padding:10px 12px;border-radius:8px;z-index:60;font-weight:600;text-align:center}
+#issueBox,#itemBox,#pdfBox,#projForm{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+#issueBox .card,#itemBox .card,#pdfBox .card,#projForm .card{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--card);padding:14px;border-radius:14px 14px 0 0;display:grid;gap:10px}
+#projForm input[type=text],#projForm select{width:100%}
+.fld{display:grid;gap:4px}.fld>span{font-size:13px;opacity:.75}
+#rptBox textarea,#issueBox textarea,#itemBox textarea,#xNotes{width:100%;font:inherit;padding:10px;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--fg)}
+#pMsg{min-height:2.7em}   /* fixed height so a message never shifts the sheet while dragging */
+.thumbs img{height:64px;border-radius:6px;border:1px solid var(--ln);cursor:pointer}
+.kw{display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--bg);border:1px solid var(--ln);border-radius:999px;font-size:13px}
+.kw button{padding:0 6px;border:0;background:none;color:inherit;font-size:16px}
+.kw.off{opacity:.5}
+/* ---- Projects / Sheets / Setup ---- */
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.tile{background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:8px 10px}
+.tile b{display:block;font-size:22px;line-height:1.15}
+.tile span{font-size:12px;opacity:.7}
+#cards,#archCards,#projCards,#archProjCards{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.scard{background:var(--bg);border:1px solid var(--ln);border-radius:10px;overflow:hidden;display:grid;align-content:start}
+.scard .main{cursor:pointer;display:grid;gap:6px;padding-bottom:8px}
+.scard .main:focus-visible{outline:3px solid var(--ac)}
+.scard canvas{width:100%;display:block;background:#fff;border-bottom:1px solid var(--ln)}
+.scard .pad{padding:0 10px;display:grid;gap:5px}
+.scard .ttl{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scard .pct{font-size:26px;font-weight:800;line-height:1}
+.scard .pct small{font-size:12px;font-weight:400;opacity:.7;margin-left:5px}
+.scard .meta{font-size:12.5px;opacity:.75}
+.scard details{margin:0 10px 10px}
+.pcard .ttl{font-size:17px;padding-top:10px;white-space:normal}
+.track{height:10px;background:var(--card);border:1px solid var(--ln);border-radius:5px;overflow:hidden;position:relative}
+.track i{position:absolute;left:0;top:0;bottom:0}
+.track .p{background:var(--ac);opacity:.35}.track .o{background:var(--ac)}
+.badges{display:flex;gap:5px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;color:#fff;background:#8a8f8c}
+.badge.red{background:#d64545}.badge.amber{background:#e6a100;color:#111}
+.warn{padding:10px;border:1px solid #e6a100;background:rgba(230,161,0,.15);border-radius:8px}
+.cbrow{display:flex;gap:8px;align-items:center;padding:3px 0}
+.cbrow input{width:18px;height:18px}
+</style>
+</head>
+<body>
+<header>
+<div class="hrow">
+<div class="hl"><button id="backBtn" type="button" hidden>&larr; Projects</button><h1 id="appTitle">Walkdown <small style="font-weight:400;opacity:.6">v9</small></h1><span id="sheetTitle" hidden></span></div>
+<button id="gpsBtn" type="button" aria-pressed="false">GPS: Off</button>
+</div>
+<nav id="navTop" hidden><button data-v="home" class="on">Sheets</button><button data-v="setup">Setup</button></nav>
+<nav id="navSheet" hidden><button data-m="align">Align</button><button data-m="plan">Plan</button><button data-m="walk">Walk</button><button data-m="review">Review</button></nav>
+</header>
+<section id="ctl">
+
+<div id="p-projects">
+<div id="storeWarn" class="warn" hidden>Storage is not available in this browser mode (a private window can cause this). Projects, sheets and updates will not be saved.</div>
+<div class="row"><button id="newProjBtn" type="button" class="pri">New project</button></div>
+<p id="projMsg" class="h">Each project holds its own sheets, keywords and categories. Tap a project to open it.</p>
+<div id="projCards"></div>
+<details id="archProjBox" hidden><summary id="archProjSum">Archived projects</summary><div id="archProjCards"></div></details>
+<details id="devBox"><summary>Device storage</summary>
+<p id="storeInfo2" class="h"></p>
+<div class="row"><button id="wipeAll" type="button" class="danger">Erase everything on this device</button></div></details>
+</div>
+
+<div id="p-home" hidden>
+<p id="projLine" class="h"></p>
+<div id="homeSum" class="sum"></div>
+<div class="row"><button id="impBtn" type="button" class="pri">Import sheets</button><input type="file" id="impFile" accept="application/pdf,image/*" multiple hidden><input type="text" id="homeFilter" placeholder="Filter sheets" hidden></div>
+<p id="impMsg" class="h">Import PDFs or images of your drawings. Each sheet keeps its own plan, alignment and updates. Tap a sheet to open it.</p>
+<div id="cards"></div>
+<details id="archBox" hidden><summary id="archSum">Archived sheets</summary><div id="archCards"></div></details>
+</div>
+
+<div id="p-setup" hidden>
+<details id="projBox"><summary>Project settings</summary>
+<div class="stack">
+<div class="row"><span class="h" style="min-width:64px">Name</span><input type="text" id="projName" placeholder="e.g. Biobloom"></div>
+<div class="row"><span class="h" style="min-width:64px">Number</span><input type="text" id="projNumber" placeholder="e.g. 2026-0142"></div>
+<div class="row"><span class="h" style="min-width:64px">Location</span><input type="text" id="projLoc" placeholder="e.g. Raleigh, NC"></div>
+<div class="row"><label class="h">"In progress" counts as <input type="number" id="pPct" min="0" max="100" value="50" style="width:64px;padding:4px 6px"> % complete (all sheets in this project)</label></div>
+<p id="storeInfo" class="h"></p>
+<div class="row"><button id="delProj" type="button" class="danger">Delete this project</button></div>
+</div></details>
+<div class="row"><button type="button" class="chip on" data-s="keys">Keywords</button><button type="button" class="chip" data-s="export">Master export</button></div>
+
+<div id="s-keys" class="stack">
+<p class="h">Words the mic listens for, shared by every sheet in this project. No keyword = nothing logged. The first status word starts an update and what follows becomes the note. "note ..." adds to your last update. <b>Global</b> keywords are the default for every category. Give a category its own keywords by switching it to <b>Custom</b>: its own keywords then replace the global ones for that category (near a planned item of that category, or when you say the category name).</p>
+<p id="kwHint" class="h"></p>
+<p id="kwNote" class="h"></p>
+<div class="row"><span class="h">Show</span><select id="kwView"></select></div>
+<div id="kwGroups" style="display:grid;gap:8px"></div>
+<details><summary>Add keyword</summary>
+<div class="row"><input type="text" id="kwNew" placeholder="keyword, e.g. poured"><select id="kwScope"></select><select id="kwStatus"></select><button id="kwAdd" class="pri">Add</button></div>
+<p class="h">Adding a keyword to a category switches that category to Custom.</p></details>
+<details><summary>Categories</summary>
+<div id="scList" class="row"></div>
+<div class="row"><input type="text" id="scNew" placeholder="new category, e.g. Embeds"><button id="scAdd" class="pri">Add</button></div></details>
+<details id="kwImp"><summary>Import from Excel / CSV</summary>
+<p class="h">Columns: Scope (the category), Keyword, Status. Use All in Scope for a global keyword. A category that has its own rows switches to Custom. Status: Not started, In progress, Complete, Issue. Use the Walkdown_Keywords_Template.xlsx file, or download a CSV below.</p>
+<div class="row"><input type="file" id="kwFile" accept=".xlsx,.csv"></div>
+<div class="row"><label class="h"><input type="checkbox" id="kwReplace"> Replace all existing keywords (otherwise merge)</label></div>
+<div class="row"><button id="kwTpl">Download CSV template</button></div>
+<p id="kwMsg" class="h"></p></details>
+<div class="row"><button id="kwReset">Reset to defaults</button></div>
+</div>
+
+<div id="s-export" class="stack" hidden>
+<p class="h">Export across every sheet in this project. Open a report to print it or save it as a PDF.</p>
+<div class="row" id="xType"></div>
+<div class="row"><span class="h">As of</span><input type="date" id="xDate" style="padding:7px 8px;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--fg);font:inherit"></div>
+<div id="xSheetsBox" class="stack" hidden>
+<div class="row"><b>Sheets to include</b><button type="button" id="xAll" class="chip">All</button><button type="button" id="xNone" class="chip">None</button></div>
+<div id="xSheets"></div>
+</div>
+<div class="row"><label class="h">Flag in-progress items with no update for <input type="number" id="xStall" min="1" max="30" value="3" style="width:56px;padding:4px 6px;font:inherit;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--fg)"> days</label></div>
+<div class="row" id="xStaleRow"><label class="h">Flag sheets not walked in <input type="number" id="xStale" min="1" max="60" value="7" style="width:56px;padding:4px 6px;font:inherit;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--fg)"> days</label></div>
+<textarea id="xNotes" rows="3" placeholder="Optional notes for management (weather, access, deliveries, inspections...)"></textarea>
+<div class="row"><button id="xPrev" type="button" class="pri">Preview report</button><button id="xDl" type="button">Download report (HTML)</button><button id="xCsv" type="button">Download all updates (CSV)</button></div>
+<p id="xMsg" class="h"></p>
+</div>
+</div>
+
+<div id="missingBar" class="warn" hidden>
+<b>The drawing for this sheet is not stored on this device.</b> It was saved by an earlier version. Attach the same drawing (PDF or image) to keep working. Your plan and updates are kept.
+<div class="row" style="margin-top:8px"><input type="file" id="attachFile" accept="application/pdf,image/*"></div>
+<p id="attachMsg" class="h"></p>
+</div>
+
+<div id="p-align" hidden>
+<p class="h">GPS turns on automatically here. Tap a spot you can identify on the sheet, stand on it, then record GPS. Repeat for 2 or more spots, spread apart (4 is best). Alignment is saved with this sheet.</p>
+<p id="alignGps" class="h"></p>
+<div class="row"><button id="rec" class="pri">Record GPS for tapped spot</button><button id="clr">Reset</button></div>
+<p id="fit" class="h">No anchors yet.</p>
+</div>
+<div id="p-plan" hidden>
+<p class="h">Mark what you will review before the walk. Pick a category and a shape, then tap the sheet. Highlighter: tap points along a line, then Finish line. Tap a placed item to select it, then drag it to move it, or use Size (or its corner handle) to resize. Items cannot overlap.</p>
+<div class="row"><select id="pScope"></select><input type="text" id="pNew" placeholder="new category, e.g. Piers"><button id="pAdd">Add category</button></div>
+<div class="row" id="pTools"></div>
+<div class="row"><span class="h" id="sizeLbl">Size</span><input type="range" id="pSize" min="5" max="60" value="24" style="flex:1"></div>
+<div class="row" id="pSel" hidden><b id="selLabel"></b><button id="selDel">Delete</button><button id="selDone" class="pri">Done</button></div>
+<div class="row"><button id="pFinish" class="pri" hidden>Finish line</button><button id="pUndo">Undo</button><button id="pClear">Clear plan</button></div>
+<p id="pMsg" class="h"></p>
+<p id="pInfo" class="h"></p>
+</div>
+<div id="p-walk" hidden>
+<div class="row"><button id="go" class="pri">Start walk</button><button id="photo">Take photo</button><input type="file" id="camera" accept="image/*" capture="environment" hidden><select id="scope"></select><label class="h"><input type="checkbox" id="rb"> read back</label></div>
+<div class="row"><input type="text" id="txt" placeholder="or type an update"><button id="send">Add</button></div>
+<p id="nearLine" class="h"></p>
+<p id="st" class="h">Tip: tap a box on the sheet to set its status, add notes, or take a photo. Tap empty space to set your position by hand when there is no GPS fix.</p>
+</div>
+<div id="p-review" hidden>
+<div id="walkMeta" class="h"></div>
+<div class="row" id="fState"></div>
+<div class="row" id="fStatus"></div>
+<div class="row"><span class="h">Category</span><select id="fScope"></select></div>
+<p id="mapInfo" class="h"></p>
+<div id="list" style="display:grid;gap:8px"></div>
+<div class="row"><button id="csv">Export CSV</button><button id="png">Export marked-up PNG</button></div>
+<details id="rptBox"><summary>Daily report (this sheet)</summary>
+<div class="row"><span class="h">Date</span><input type="date" id="rptDate" style="padding:7px 8px;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--fg);font:inherit"></div>
+<div class="row"><label class="h">Flag in-progress items with no update for <input type="number" id="rptStall" min="1" max="30" value="3" style="width:56px;padding:4px 6px;font:inherit;border-radius:6px;border:1px solid var(--ln);background:var(--bg);color:var(--fg)"> days</label></div>
+<textarea id="rptNotes" rows="3" placeholder="Optional notes for management (weather, access, deliveries, inspections...)"></textarea>
+<div class="row"><button id="rptPrev" class="pri">Preview report</button><button id="rptDl">Download report (HTML)</button></div>
+<p id="rptMsg" class="h"></p></details>
+</div>
+</section>
+
+<div id="rptView" hidden><div class="bar"><button type="button" id="rptClose">Close</button><button type="button" id="rptSave" class="pri">Download</button><button type="button" id="rptPrint">Print / Save as PDF</button></div><iframe id="rptFrame" title="Report"></iframe></div>
+<div id="quick" hidden></div>
+<div id="toast" hidden></div>
+<div id="projForm" hidden><div class="card"><b id="pfTitle"></b>
+<label class="fld"><span>Project name (required)</span><input type="text" id="pfName" placeholder="e.g. Biobloom"></label>
+<label class="fld"><span>Project number</span><input type="text" id="pfNumber" placeholder="e.g. 2026-0142"></label>
+<label class="fld"><span>Location</span><input type="text" id="pfLoc" placeholder="e.g. Raleigh, NC"></label>
+<label class="fld" id="pfCopyRow"><span>Start keywords and categories from</span><select id="pfCopy"></select></label>
+<div class="row"><button type="button" id="pfCancel">Cancel</button><button type="button" id="pfSave" class="pri">Save</button></div></div></div>
+<div id="pdfBox" hidden><div class="card"><b id="pdfTitle"></b><div class="h" id="pdfInfo"></div>
+<input type="text" id="pdfPages" placeholder="Pages, e.g. 1-3, 5">
+<div class="row"><button type="button" id="pdfAll">All pages</button><button type="button" id="pdfGo" class="pri">Import these pages</button><button type="button" id="pdfSkip">Skip this file</button></div></div></div>
+<div id="issueBox" hidden><div class="card"><b id="issueTitle"></b>
+<textarea id="issueNote" rows="3" placeholder="What is the issue? e.g. not enough rebar tied in"></textarea>
+<div class="row"><button type="button" id="issueCancel">Cancel</button><button type="button" id="issueSave" class="pri">Save issue</button></div></div></div>
+<div id="itemBox" hidden><div class="card">
+<div class="row" style="justify-content:space-between"><b id="itemTitle"></b><button type="button" id="itemClose">Close</button></div>
+<div id="itemCur" class="h"></div>
+<div class="row" id="itemStatus"></div>
+<textarea id="itemNote" rows="3" placeholder="Notes (required for an issue)"></textarea>
+<div class="row"><button type="button" id="itemPhoto">Take photo</button><input type="file" id="itemCam" accept="image/*" capture="environment" hidden><span class="h" id="itemMsg"></span></div>
+<div class="row thumbs" id="itemThumbs"></div>
+<div class="row"><button type="button" id="itemSave" class="pri">Save</button></div>
+<div id="itemHist" class="h"></div>
+</div></div>
+
+<div id="sheetArea" hidden>
+<div id="progBar" hidden>
+<div class="row" style="justify-content:space-between"><b id="progTxt"></b><span class="h" id="progCnt"></span></div>
+<div id="progTrack"><div id="progPend"></div><div id="progOff"></div></div>
+<div class="h" id="progSub"></div>
+</div>
+<div id="wrap"><div id="inner"><canvas id="base" width="600" height="400"></canvas><canvas id="ov" width="600" height="400"></canvas></div></div>
+<div style="padding:8px 12px" class="row"><span class="h">Zoom</span><input type="range" id="zoom" min="100" max="400" value="100" style="flex:1"></div>
+</div>
+<script>
+// ---------- CONFIG ----------
+// Global keywords (default for every category). Categories start empty: the user adds their own.
+const DEFAULT_KW = [
+  ["complete","Complete"],["completed","Complete"],["done","Complete"],["finished","Complete"],["poured","Complete"],["installed","Complete"],
+  ["in progress","In progress"],["started","In progress"],["ongoing","In progress"],
+  ["issue","Issue"],["problem","Issue"],["missing","Issue"],["defect","Issue"],["crack","Issue"],
+  ["not started","Not started"]
+].map(([word,status]) => ({word,status,scope:"All"}));   // scope "All" = global
+// KW, SCOPES, CATMODE, PCT belong to the OPEN PROJECT (see openProject). CATMODE[category] === "custom" means that
+// category uses only its own keywords; any other category uses the global ones.
+let SCOPES = [];
+let KW = DEFAULT_KW.map(k => ({...k}));
+let CATMODE = {};
+const STATUS = {"Not started":"#8a8f8c","In progress":"#e6a100","Complete":"#2e9e5b","Issue":"#d64545","Note":"#1d5fd1"};
+// Optional: URL of your company-approved AI endpoint. It receives
+// {transcript, scopes, statuses} and must return {updates:[{scope,status,note}]}.
+// Suggested system prompt for it: "Convert this site walkdown remark into JSON updates.
+// scope must be one of scopes, status one of statuses. Remarks like 'all X done except Y'
+// become one Complete update and one Issue update naming Y in note. Return JSON only."
+const LLM_ENDPOINT = "";
+// ---------- STATE ----------
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const base = $("base"), ov = $("ov"), bx = base.getContext("2d"), ox = ov.getContext("2d");
+// The arrays below always point at the OPEN sheet's own data (see bindSheet). Never reassign them while a sheet is open: mutate in place.
+let anchors = [], T = null, pending = null, pos = null, manual = null, updates = [];
+let walks = [], voiceLogs = [], photos = [], currentWalk = null;
+let targets = [];                       // pre-walk plan: items the user marked to review (soft-deleted, never removed)
+let projects = [], curProj = null;      // every project, and the one that is open (null on the Projects page)
+let allSheets = [], sheets = [], cur = null;   // allSheets: every sheet on the device. sheets: the open project's sheets. cur: the open sheet
+let projectName = "", projectNumber = "", projectLoc = "";
+let near = null;                        // nearest planned item to the current position: {t, pt, d}
+let sheetName = "", sheetLoaded = false;   // sheetLoaded: the open sheet's drawing is on screen
+let view = "projects", mode = "";       // view: projects | home (Sheets tab) | setup | sheet.  mode (inside a sheet): align | plan | walk | review
+let tool = "square", hlDraft = [];      // Plan tab: shape tool + highlighter points in progress
+let eraseOn = false, selId = null, planActs = [], defSizeV = 24, suppressClick = false;
+const PCT = {"Not started": 0, "In progress": 50, "Complete": 100, "Issue": 0};   // progress weight per status (Issue = 0 until resolved)
+let walking = false, rec = null, lock = null;
+let gpsOn = false, gpsWatch = null, gpsState = "off";   // gpsState: off | searching | fix | denied
+const curScope = () => $("scope").value || "General";
+const projLabel = () => [projectName, projectNumber ? "No. " + projectNumber : "", projectLoc].filter(Boolean).join(" \u00b7 ");
+// PDF.js is loaded on demand so a blocked CDN can't break the whole app (images still work).
+const PDFJS_URLS = ["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/", "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/"];
+function loadPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  return new Promise((resolve, reject) => {
+    let i = 0;
+    const next = () => {
+      if (i >= PDFJS_URLS.length) return reject(new Error("PDF engine blocked or offline"));
+      const b = PDFJS_URLS[i++], sc = document.createElement("script");
+      sc.src = b + "pdf.min.js";
+      sc.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = b + "pdf.worker.min.js"; resolve(pdfjsLib); };
+      sc.onerror = () => { sc.remove(); next(); };
+      document.head.appendChild(sc);
+    };
+    next();
+  });
+}
+function renderScopeSelects() {
+  const keep = $("scope").value, pk = $("pScope").value;
+  $("scope").innerHTML = ""; if (SCOPES.length) SCOPES.forEach(s => $("scope").add(new Option(s))); else $("scope").add(new Option("General", ""));
+  if (SCOPES.includes(keep)) $("scope").value = keep;
+  $("pScope").innerHTML = ""; if (SCOPES.length) SCOPES.forEach(s => $("pScope").add(new Option(s))); else $("pScope").add(new Option("No categories yet", ""));
+  if (SCOPES.includes(pk)) $("pScope").value = pk;
+  const fk = $("fScope").value || "All";
+  $("fScope").innerHTML = ""; ["All"].concat(SCOPES).forEach(s => $("fScope").add(new Option(s)));
+  $("fScope").value = ["All"].concat(SCOPES).includes(fk) ? fk : "All";
+}
+// ---------- VIEWS: Projects page > project (Sheets / Setup tabs) > open sheet (Align / Plan / Walk / Review) ----------
+function showView(v) {
+  view = v;
+  const inSheet = v === "sheet", inProj = v === "home" || v === "setup";
+  $("p-projects").hidden = v !== "projects"; $("p-home").hidden = v !== "home"; $("p-setup").hidden = v !== "setup";
+  $("navTop").hidden = !inProj; $("navSheet").hidden = !inSheet;
+  $("backBtn").hidden = v === "projects"; $("backBtn").textContent = inSheet ? "\u2190 Sheets" : "\u2190 Projects";
+  $("appTitle").hidden = v !== "projects"; $("sheetTitle").hidden = v === "projects"; $("sheetArea").hidden = !inSheet;
+  if (inProj) $("sheetTitle").textContent = projectName || "Project";
+  document.querySelectorAll("#navTop button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  if (!inSheet) {
+    mode = ""; ["align","plan","walk","review"].forEach(k => $("p-" + k).hidden = true);
+    $("quick").hidden = true; $("toast").hidden = true; $("missingBar").hidden = true;
+    $("issueBox").hidden = true; $("itemBox").hidden = true; document.body.classList.remove("hasQuick");
+  }
+}
+document.querySelectorAll("#navTop button").forEach(b => b.onclick = () => {
+  showView(b.dataset.v);
+  if (b.dataset.v === "home") renderHome(); else openSetup();
+});
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll("#navSheet button").forEach(x => x.classList.toggle("on", x.dataset.m === m));
+  ["align","plan","walk","review"].forEach(k => $("p-" + k).hidden = k !== m);
+  hlDraft = [];
+  if (m !== "plan") { selId = null; eraseOn = false; }
+  ov.style.touchAction = "";
+  if (m === "plan") renderPlan();
+  $("quick").hidden = m !== "walk"; $("toast").hidden = true; document.body.classList.toggle("hasQuick", m === "walk");
+  if (m === "align" || m === "walk") startGps();           // GPS is needed here, so turn it on automatically
+  if (m === "review") { renderWalkMeta(); renderList(); initReportBox(); }
+  updateGpsLines();
+  draw();
+}
+document.querySelectorAll("#navSheet button").forEach(b => b.onclick = () => setMode(b.dataset.m));
+// ---------- SIZE ----------
+function size(w, h) { [base, ov].forEach(c => { c.width = w; c.height = h; }); }
+$("zoom").oninput = e => $("inner").style.width = e.target.value + "%";
+// ---------- GPS (stays on once started; the header button toggles it) ----------
+const GPS_KEY = "walkdown-gps";
+const distM = (a, b) => {                                          // metres between two {lat,lon}
+  const R = 6371000, p = Math.PI / 180, dLat = (b.lat - a.lat) * p, dLon = (b.lon - a.lon) * p;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * p) * Math.cos(b.lat * p) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+function gpsLabel() {
+  if (gpsState === "denied") return "GPS: Blocked";
+  if (!gpsOn) return "GPS: Off";
+  return pos ? "GPS \u00b1" + Math.round(pos.acc) + " m" : "GPS: Searching...";
+}
+function updateGpsLines() {
+  const g = !gpsOn
+    ? (gpsState === "denied" ? "Location is blocked for this site. Allow it in the browser settings, then tap the GPS button." : "GPS is off. Tap the GPS button at the top to turn it on.")
+    : pos ? "GPS +/-" + Math.round(pos.acc) + " m" + (T ? "" : " (sheet not aligned yet: use the Align tab)") : "Waiting for a GPS fix...";
+  $("alignGps").textContent = g.replace(" (sheet not aligned yet: use the Align tab)", ""); $("nearLine").textContent = g + (gpsOn && T ? nearText() : "");
+}
+function setGpsBtn() {
+  const b = $("gpsBtn"); b.textContent = gpsLabel();
+  b.classList.toggle("on", gpsOn && !!pos); b.classList.toggle("bad", gpsState === "denied");
+  b.setAttribute("aria-pressed", gpsOn ? "true" : "false");
+  updateGpsLines();
+}
+function startGps() {
+  if (gpsWatch != null) return;
+  if (!navigator.geolocation) { gpsState = "denied"; setGpsBtn(); return; }
+  gpsOn = true; gpsState = "searching"; setGpsBtn();
+  try { localStorage.setItem(GPS_KEY, "1"); } catch (e) {}
+  gpsWatch = navigator.geolocation.watchPosition(onFix, onGpsErr, {enableHighAccuracy: true, maximumAge: 1000, timeout: 30000});
+}
+function stopGps() {
+  if (gpsWatch != null) navigator.geolocation.clearWatch(gpsWatch);
+  gpsWatch = null; gpsOn = false; gpsState = "off"; pos = null; near = null;
+  try { localStorage.setItem(GPS_KEY, "0"); } catch (e) {}
+  setGpsBtn(); if (cur) draw();
+}
+function onFix(g) {
+  pos = {lat: g.coords.latitude, lon: g.coords.longitude, acc: g.coords.accuracy, t: Date.now()};
+  gpsState = "fix";
+  if (walking) recordTrail(false);                                // the trail only records while a walk is running
+  refreshNear(); setGpsBtn(); if (cur) draw();
+}
+function onGpsErr(err) {
+  if (err.code === 1) {                                            // permission denied: the watch is dead
+    if (gpsWatch != null) navigator.geolocation.clearWatch(gpsWatch);
+    gpsWatch = null; gpsOn = false; gpsState = "denied"; pos = null;
+  } else gpsState = "searching";                                   // no signal / timeout: keep trying
+  setGpsBtn();
+}
+$("gpsBtn").onclick = () => gpsOn ? stopGps() : startGps();
+// Walking trail: stored on the walk with lat/lon (and sheet x/y when aligned), so it can be redrawn after alignment.
+function recordTrail(force) {
+  if (!walking || !currentWalk || !pos) return;
+  const tr = currentWalk.trail, last = tr[tr.length - 1];
+  if (!force && last && distM(last, pos) < 1.5) return;           // ignore GPS jitter while standing still
+  const pt = {time: new Date().toISOString(), lat: pos.lat, lon: pos.lon, acc: pos.acc};
+  if (T) { const q = toPx(pos.lat, pos.lon); pt.x = q[0]; pt.y = q[1]; }
+  tr.push(pt); saveSoon();
+}
+const trailPx = q => T ? toPx(q.lat, q.lon) : (q.x != null ? [q.x, q.y] : null);
+// ---------- GEOREFERENCING (similarity transform, least squares) ----------
+let ref = null;
+const locW = (rf, lat, lon) => [(lon - rf.lon) * 111320 * Math.cos(rf.lat * Math.PI / 180), -(lat - rf.lat) * 110540]; // east, -north (y down)
+const projW = (Tm, z) => [Tm.ar * z[0] - Tm.ai * z[1] + Tm.br, Tm.ai * z[0] + Tm.ar * z[1] + Tm.bi];
+// Pure: works out the transform for any list of anchors (used for the open sheet and, in exports, for other sheets).
+function computeTransform(an) {
+  if (!an || an.length < 2) return null;
+  const rf = {lat: an[0].lat, lon: an[0].lon};
+  const Z = an.map(a => locW(rf, a.lat, a.lon)), W = an.map(a => [a.px, a.py]), n = Z.length;
+  const zm = [0, 1].map(k => Z.reduce((s, z) => s + z[k], 0) / n), wm = [0, 1].map(k => W.reduce((s, w) => s + w[k], 0) / n);
+  let nr = 0, ni = 0, d = 0;
+  for (let i = 0; i < n; i++) {
+    const zx = Z[i][0] - zm[0], zy = Z[i][1] - zm[1], wx = W[i][0] - wm[0], wy = W[i][1] - wm[1];
+    nr += zx * wx + zy * wy; ni += zx * wy - zy * wx; d += zx * zx + zy * zy;
+  }
+  if (d < 1) return {err: "close"};
+  const ar = nr / d, ai = ni / d, Tm = {ar, ai, br: wm[0] - (ar * zm[0] - ai * zm[1]), bi: wm[1] - (ar * zm[1] + ai * zm[0])};
+  let se = 0; Z.forEach((z, i) => { const p = projW(Tm, z); se += (p[0] - W[i][0]) ** 2 + (p[1] - W[i][1]) ** 2; });
+  return {rf, T: Tm, n, rmsM: Math.sqrt(se / n) / Math.hypot(ar, ai)};
+}
+const pxWith = (tf, lat, lon) => projW(tf.T, locW(tf.rf, lat, lon));
+const loc = (lat, lon) => locW(ref, lat, lon);
+const proj = z => projW(T, z);
+const toPx = (lat, lon) => proj(loc(lat, lon));
+function fit() {
+  T = null; ref = null; $("fit").textContent = anchors.length + " anchor(s). Need 2+.";
+  const tf = computeTransform(anchors);
+  if (!tf) { updateGpsLines(); return; }
+  if (tf.err) { $("fit").textContent = "Anchors are too close together. Spread them out."; updateGpsLines(); return; }
+  ref = tf.rf; T = tf.T;
+  $("fit").textContent = `${tf.n} anchors. Alignment error ~${tf.rmsM.toFixed(1)} m (RMS). ` + (tf.n < 3 ? "Add a third for an error check." : tf.rmsM > 5 ? "High: re-record the worst point." : "Good.");
+  updateGpsLines();
+}
+// ---------- ALIGN ----------
+function tapPoint(e) {
+  const r = ov.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+  return [(t.clientX - r.left) * ov.width / r.width, (t.clientY - r.top) * ov.height / r.height];
+}
+ov.addEventListener("click", e => {
+  if (suppressClick) { suppressClick = false; return; }            // a drag just ended: it is not a tap
+  const p = tapPoint(e);
+  if (mode === "align") pending = p;
+  else if (mode === "plan") planTap(p);
+  else if (mode === "walk") {
+    const hit = hitTarget(p);
+    if (hit) { openItem(hit.t); return; }                           // tap a box: status / notes / photo
+    const ph = photoAt(p); if (ph) return showPhoto(ph);
+    manual = p; refreshNear();
+  } else { const ph = photoAt(p); if (ph) return showPhoto(ph); }
+  draw();
+});
+$("rec").onclick = () => {
+  if (!pending) return alert("Tap a spot on the sheet first.");
+  const add = (lat, lon, acc) => { anchors.push({px: pending[0], py: pending[1], lat, lon, acc}); pending = null; fit(); saveState(); draw(); };
+  if (pos && Date.now() - pos.t < 15000) {                         // use the live GPS fix
+    if (pos.acc > 25 && !confirm("GPS accuracy is only +/-" + Math.round(pos.acc) + " m. Record this point anyway?")) return;
+    return add(pos.lat, pos.lon, pos.acc);
+  }
+  $("fit").textContent = "Getting GPS fix...";
+  navigator.geolocation.getCurrentPosition(g => add(g.coords.latitude, g.coords.longitude, g.coords.accuracy),
+    err => $("fit").textContent = "GPS error: " + err.message, {enableHighAccuracy: true, timeout: 20000});
+};
+$("clr").onclick = () => { anchors.length = 0; T = null; pending = null; fit(); saveState(); draw(); };
+// ---------- WALK ----------
+const curPx = () => (pos && T) ? toPx(pos.lat, pos.lon) : manual;
+$("go").onclick = async () => {
+  walking = !walking; $("go").textContent = walking ? "Finish walk" : "Start walk";
+  if (walking) {
+    currentWalk = {id: newId("walk"), startedAt: new Date().toISOString(), finishedAt: null, trail: []};
+    walks.push(currentWalk);
+    startGps();                                                     // no-op if GPS is already on
+    if (pos) recordTrail(true);                                     // first trail point right away
+    saveState();
+    try { lock = await navigator.wakeLock.request("screen"); } catch (e) {}
+    startMic();
+    $("st").textContent = "Walk started. The trail is being recorded" + (T ? "." : " (align the sheet to see it on the drawing).");
+  } else {
+    if (rec) rec.stop(); if (lock) lock.release(); lock = null;
+    if (currentWalk) currentWalk.finishedAt = new Date().toISOString();
+    saveState();
+    $("st").textContent = "Walk finished. Open Review.";
+  }
+  if (cur) draw();
+};
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $("st").textContent = "No speech recognition here. Use the text box."; return; }
+  rec = new SR(); rec.continuous = true; rec.lang = "en-US";
+  rec.onresult = e => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) handle(e.results[i][0].transcript); };
+  rec.onend = () => { if (walking) try { rec.start(); } catch (e) {} };
+  rec.start();
+}
+$("send").onclick = () => { const t = $("txt").value.trim(); if (t) { handle(t); $("txt").value = ""; } };
+// ---- PARSER (pure functions; no DOM) ----
+const esc = w => w.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+const DAYS = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+const fmtDate = d => d.toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric", year: "numeric"});
+const isoDay = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+// "tomorrow" -> "tomorrow (Wed, Oct 28, 2026)". Returns the first date found as YYYY-MM-DD in `due`.
+function resolveDates(note, now) {
+  now = now || new Date();
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const add = n => { const d = new Date(base); d.setDate(d.getDate() + n); return d; };
+  const toMon = ((1 - base.getDay() + 7) % 7) || 7;           // days until next Monday
+  let due = null;
+  const re = new RegExp("\\b(today|tonight|tomorrow|yesterday|end of (?:the )?week|next week|(?:(this|next)\\s+)?(" + DAYS.join("|") + "))\\b", "gi");
+  const out = note.replace(re, (m, _x, mod, day) => {
+    const k = m.toLowerCase().replace(/\s+/g, " "); let d;
+    if (k === "today" || k === "tonight") d = add(0);
+    else if (k === "tomorrow") d = add(1);
+    else if (k === "yesterday") d = add(-1);
+    else if (k.startsWith("end of")) d = add((5 - base.getDay() + 7) % 7);   // Friday
+    else if (k === "next week") d = add(toMon);
+    else {
+      const t = DAYS.indexOf(day.toLowerCase());
+      d = (mod && mod.toLowerCase() === "next") ? add(toMon + (t + 6) % 7) : add(((t - base.getDay() + 7) % 7) || 7);
+    }
+    if (!due) due = isoDay(d);
+    return m + " (" + fmtDate(d) + ")";
+  });
+  return {note: out, due};
+}
+const cleanNote = t => t.replace(/^[\s,.:;\-]+/, "").replace(/[\s,;\-]+$/, "").replace(/^note\b[\s,.:;\-]*/i, "").trim();
+// Returns null when no keyword was heard, else {kind:"note", note} or {kind:"updates", items:[{scope,status,note,due}]}.
+// Keyword rule: a category set to Custom (modes[category] === "custom") listens only for its OWN keywords;
+// every other category (and "General") listens for the GLOBAL keywords.
+function parseRemark(text, scopes, kws, defaultScope, now, lockScope, modes) {
+  modes = modes || {};
+  const norm = w => w.toLowerCase().replace(/\s+/g, " ");
+  const firstScope = str => {                                  // earliest category word mentioned
+    let f = null, fi = 1e9;
+    scopes.forEach(sc => { const m = new RegExp("\\b" + esc(sc) + "\\b", "i").exec(str); if (m && m.index < fi) { f = sc; fi = m.index; } });
+    return f;
+  };
+  // Category being walked: the planned item's category when locked, else one said aloud, else the selected one.
+  const hint = lockScope ? defaultScope : (firstScope(text) || defaultScope);
+  const isScoped = k => !!(k.scope && k.scope !== "All");
+  const custom = !!hint && modes[hint] === "custom";
+  const words = (custom ? kws.filter(k => k.scope === hint) : kws.filter(k => !isScoped(k)))
+    .sort((a, b) => b.word.length - a.word.length);            // longest first
+  const kwRe = words.length ? new RegExp("\\b(" + words.map(k => esc(k.word)).join("|") + ")\\b", "i") : null;
+  const km = kwRe ? kwRe.exec(text) : null;
+  const nm = /\bnote\b/i.exec(text);
+  if (!km && !nm) return null;
+  if (nm && (!km || nm.index < km.index)) {                    // "note ..." comes first: note-only
+    const n = resolveDates(cleanNote(text.slice(nm.index + nm[0].length)), now);
+    return n.note ? {kind: "note", note: n.note, due: n.due} : null;
+  }
+  const status = words.find(k => norm(k.word) === norm(km[0])).status;
+  const scopeIn = (str, before) => {                           // nearest category word before `before`, else first anywhere
+    let best = null, bi = -1, first = null, fi = 1e9;
+    scopes.forEach(sc => {
+      const re = new RegExp("\\b" + esc(sc) + "\\b", "gi"); let m;
+      while ((m = re.exec(str))) { if (m.index < before && m.index > bi) { best = sc; bi = m.index; } if (m.index < fi) { first = sc; fi = m.index; } }
+    });
+    return best || first;
+  };
+  const scope = lockScope ? defaultScope : (scopeIn(text, km.index) || defaultScope);
+  let rest = text.slice(km.index + km[0].length);
+  const ex = /\b(except|other than|apart from)\b/i.exec(rest);  // "X done except Y" -> two updates
+  const mk = (sc, st, raw) => { const r = resolveDates(cleanNote(raw), now); return {scope: sc, status: st, note: r.note, due: r.due}; };
+  if (ex) {
+    const after = rest.slice(ex.index + ex[0].length);
+    return {kind: "updates", items: [mk(scope, status, rest.slice(0, ex.index)), mk(scopeIn(after, 1e9) || scope, "Issue", after)]};
+  }
+  return {kind: "updates", items: [mk(scope, status, rest)]};
+}
+// ---- END PARSER ----
+async function extract(text, parsed) {
+  // Optional AI refinement (company endpoint). Only runs after a keyword was heard; falls back to the local parse.
+  if (LLM_ENDPOINT && parsed.kind === "updates") {
+    try {
+      const r = await fetch(LLM_ENDPOINT, {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({transcript: text, scopes: SCOPES, statuses: Object.keys(STATUS)})});
+      const j = await r.json();
+      const ok = Array.isArray(j.updates) && j.updates.length && j.updates.every(u => u && STATUS[u.status] && SCOPES.includes(u.scope));
+      if (ok) return j.updates.map(u => ({scope: u.scope, status: u.status, ...resolveDates(String(u.note || ""))}));
+    } catch (e) { console.warn("LLM call failed, using local parse", e); }
+  }
+  return parsed.items;
+}
+const newId = p => crypto.randomUUID ? crypto.randomUUID() : p + "-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+function newVoiceLog(text, source) {
+  const p = curPx();
+  const v = {id: newId("voice"), walkId: currentWalk ? currentWalk.id : null, time: new Date().toISOString(), source, transcript: text,
+    x: p ? p[0] : null, y: p ? p[1] : null, lat: pos ? pos.lat : null, lon: pos ? pos.lon : null, targetId: near ? near.t.id : null};
+  voiceLogs.push(v); return v;
+}
+// Creates update records from parsed items. Only the first update links to the planned item ("done except Y": Y stays location-only).
+function commitItems(items, v, text) {
+  const made = items.map((u, i) => {
+    const linked = near && i === 0, sc = near ? near.t.scope : u.scope;
+    const rec = {id: newId("upd"), walkId: v.walkId, voiceLogId: v.id, source: v.source, time: v.time, text,
+      scope: sc, status: u.status, note: u.note || "", due: u.due || null,
+      targetId: linked ? near.t.id : null, item: linked ? near.t.label : null,
+      x: linked ? near.pt[0] : v.x, y: linked ? near.pt[1] : v.y, rawX: v.x, rawY: v.y,
+      snapDistM: linked && T ? +(near.d / Math.hypot(T.ar, T.ai)).toFixed(1) : null,
+      lat: v.lat, lon: v.lon, state: "pending", history: []};
+    updates.push(rec); return rec;
+  });
+  saveState();
+  const msg = "Logged: " + made.map(u => (u.item || u.scope) + " - " + u.status + (u.note ? " (" + u.note + ")" : "")).join("; ")
+    + (!near && liveTargets().length ? "  [not near a planned item: position only, not counted in progress]" : "");
+  $("st").textContent = msg;
+  if ($("rb").checked) speechSynthesis.speak(new SpeechSynthesisUtterance(made.map(u => (u.item || u.scope) + ", " + u.status).join(". ")));
+  if (mode === "review") renderList();
+  draw();
+  return {made, msg};
+}
+async function handle(text) {
+  refreshNear();                                                  // snap to the nearest planned item, if any
+  const parsed = parseRemark(text, SCOPES, KW, near ? near.t.scope : curScope(), undefined, !!near, CATMODE);
+  if (!parsed) { $("st").textContent = "Ignored (no keyword): " + text; return; }   // nothing is logged
+  const v = newVoiceLog(text, "voice"), now = v.time;
+  if (parsed.kind === "note") {                                   // attach to the last update of this walk, else standalone Note
+    const last = updates.slice().reverse().find(u => u.walkId === v.walkId && u.state !== "rejected" && u.status !== "Note");
+    if (last) {
+      last.note = (last.note ? last.note + " " : "") + parsed.note;
+      (last.followUps = last.followUps || []).push({time: now, text, voiceLogId: v.id});
+      if (parsed.due && !last.due) last.due = parsed.due;
+      last.changedAt = now; saveState();
+      $("st").textContent = "Note added to " + (last.item || last.scope) + ": " + parsed.note;
+      if (mode === "review") renderList();
+      return;
+    }
+    parsed.items = [{scope: curScope(), status: "Note", note: parsed.note, due: parsed.due}];
+  }
+  commitItems(await extract(text, parsed), v, text);
+}
+// ---------- QUICK BUTTONS (no-talk mode) ----------
+const QUICK = ["In progress", "Complete", "Issue"];
+let toastTimer = null, issueCtx = null;
+function toast(msg, status) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  t.style.background = STATUS[status] || "var(--ac)"; t.style.color = status === "In progress" ? "#111" : "#fff";
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
+}
+// ctx: planned item to log against (captured earlier, or null for "none"); omit it to use the nearest item now.
+function quickLog(status, note, ctx, source) {
+  if (ctx !== undefined) near = ctx; else refreshNear();
+  const sc = near ? near.t.scope : curScope();
+  const text = (source === "item" ? "[Item] " : "[Button] ") + status + (note ? ": " + note : "");
+  const v = newVoiceLog(text, source || "button");
+  const r = commitItems([{scope: sc, status, note: note || "", due: null}], v, text);
+  toast(r.made.map(u => (u.item || u.scope + " (no item nearby)") + ": " + u.status + (u.note ? " - " + u.note : "")).join("; "), status);
+  try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) {}
+  return r;
+}
+QUICK.forEach(st => {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = st;
+  b.style.background = STATUS[st]; b.style.borderColor = STATUS[st]; b.style.color = st === "In progress" ? "#111" : "#fff";
+  b.onclick = () => {
+    if (st !== "Issue") return quickLog(st, "");
+    refreshNear(); issueCtx = near;
+    $("issueTitle").textContent = "Issue" + (near ? " at " + near.t.label : " (no planned item nearby, position only)");
+    $("issueNote").value = ""; $("issueNote").placeholder = "What is the issue? e.g. not enough rebar tied in";
+    $("issueBox").hidden = false; setTimeout(() => $("issueNote").focus(), 50);
+  };
+  $("quick").append(b);
+});
+$("issueCancel").onclick = () => { $("issueBox").hidden = true; };
+$("issueSave").onclick = () => {
+  const n = $("issueNote").value.trim();
+  if (!n) { $("issueNote").placeholder = "A note is required for an issue"; $("issueNote").focus(); return; }
+  $("issueBox").hidden = true; quickLog("Issue", n, issueCtx);
+};
+// ---------- ITEM SHEET (Walk tab: tap a box to set status, add notes, take photos) ----------
+const ITEM_STATUSES = ["Not started", "In progress", "Complete", "Issue"];
+let itemCtx = null;                                               // {t, sel, newPhotos:[ids]}
+const anchorPt = t => t.shape === "highlight" ? distToTarget(t, [t.x, t.y]).q : [t.x, t.y];
+const itemPhotos = t => photos.filter(p => p.targetId === t.id);
+function openItem(t) {
+  itemCtx = {t, sel: null, newPhotos: []};
+  if (!(gpsOn && pos && T)) manual = anchorPt(t);                  // no live position: treat the tap as "I am at this box"
+  $("itemNote").value = ""; $("itemNote").placeholder = "Notes (required for an issue)"; $("itemMsg").textContent = "";
+  renderItem(); $("itemBox").hidden = false;
+}
+function closeItem() { $("itemBox").hidden = true; itemCtx = null; refreshNear(); draw(); }
+function renderItem() {
+  if (!itemCtx) return;
+  const t = itemCtx.t, si = itemStatus(t, false), so = itemStatus(t, true);
+  $("itemTitle").textContent = t.label + " (" + t.scope + ")";
+  $("itemCur").textContent = "Current: " + (si || "Not reviewed") + (si && si !== so ? " (awaiting review)" : "");
+  const S = $("itemStatus"); S.innerHTML = "";
+  ITEM_STATUSES.forEach(st => {
+    const c = chipBtn(st, itemCtx.sel === st, () => { itemCtx.sel = itemCtx.sel === st ? null : st; renderItem(); });
+    if (itemCtx.sel === st) { c.style.background = STATUS[st]; c.style.borderColor = STATUS[st]; c.style.color = st === "In progress" ? "#111" : "#fff"; }
+    S.append(c);
+  });
+  const TH = $("itemThumbs"); TH.innerHTML = "";
+  itemPhotos(t).forEach(ph => { if (!ph.dataUrl) return; const im = document.createElement("img"); im.src = ph.dataUrl; im.alt = "Photo " + new Date(ph.time).toLocaleString(); im.onclick = () => showPhoto(ph); TH.append(im); });
+  const hist = updates.filter(u => u.targetId === t.id && u.state !== "rejected").sort((a, b) => b.time.localeCompare(a.time)).slice(0, 4);
+  $("itemHist").textContent = hist.length ? "Recent: " + hist.map(u => u.status + (u.note ? " (" + u.note + ")" : "") + " " + fmtTime(u.time)).join("  |  ") : "No updates yet.";
+}
+$("itemPhoto").onclick = () => $("itemCam").click();
+$("itemCam").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f || !itemCtx) return;
+  try {
+    const url = await shrinkImage(f), t = itemCtx.t, p = anchorPt(t);
+    const ph = {id: newId("photo"), walkId: currentWalk ? currentWalk.id : null, time: new Date().toISOString(), dataUrl: url,
+      x: p[0], y: p[1], lat: pos ? pos.lat : null, lon: pos ? pos.lon : null, targetId: t.id, item: t.label};
+    photos.push(ph); putPhoto(ph); itemCtx.newPhotos.push(ph.id); saveState(); renderItem(); draw();
+    $("itemMsg").textContent = "Photo saved to " + t.label + ".";
+  } catch (err) { $("itemMsg").textContent = "Could not read that photo: " + err.message; }
+};
+$("itemClose").onclick = closeItem;
+$("itemSave").onclick = () => {
+  if (!itemCtx) return;
+  const t = itemCtx.t, sel = itemCtx.sel, note = $("itemNote").value.trim();
+  if (sel === "Issue" && !note) { $("itemNote").placeholder = "A note is required for an issue"; $("itemNote").focus(); return; }
+  if (!sel && !note) {
+    if (itemCtx.newPhotos.length) { toast("Photo saved to " + t.label); return closeItem(); }
+    $("itemMsg").textContent = "Pick a status, add a note, or take a photo."; return;
+  }
+  const r = quickLog(sel || "Note", note, {t, pt: anchorPt(t), d: 0, count: 1}, "item");
+  itemCtx.newPhotos.forEach(id => { const ph = photos.find(p => p.id === id); if (ph) ph.updateId = r.made[0].id; });
+  saveState(); closeItem();
+};
+// ---------- PLAN (pre-walk items) ----------
+const TOOLS = [["square", "Square"], ["circle", "Circle"], ["highlight", "Highlighter"]];
+const PLAN_COLOR = "#7a5af8";
+const cssPx = n => n * ov.width / (ov.getBoundingClientRect().width || ov.width);   // n screen pixels, expressed in sheet pixels
+const planSize = () => ov.width * defSizeV / 1000;                          // size of new items (fraction of sheet width)
+const sizeFromSlider = (t, v) => ov.width * v / 1000 * (t.shape === "highlight" ? 0.8 : 1);
+const sliderFromSize = t => clamp(Math.round(t.size * 1000 / ov.width / (t.shape === "highlight" ? 0.8 : 1)), 5, 60);
+const liveTargets = () => targets.filter(t => !t.deleted);
+const selTarget = () => selId ? targets.find(t => t.id === selId && !t.deleted) : null;
+const planMsg = m => { $("pMsg").textContent = m || ""; };
+function nextLabel(scope) {
+  const n = targets.filter(t => t.scope === scope).length + 1;               // counts deleted too, so labels never repeat
+  return scope + " " + n;
+}
+function distSeg(p, a, b) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+  const k = l2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2)) : 0;
+  const q = [a[0] + k * dx, a[1] + k * dy];
+  return {d: Math.hypot(p[0] - q[0], p[1] - q[1]), q};
+}
+// Distance from point p to the edge of item t, plus the snap point (centre, or nearest point on a highlighted line).
+function distToTarget(t, p) {
+  if (t.shape === "highlight") {
+    let best = {d: 1e12, q: t.pts[0]};
+    for (let i = 0; i < t.pts.length - 1; i++) { const r = distSeg(p, t.pts[i], t.pts[i + 1]); if (r.d < best.d) best = r; }
+    return {d: Math.max(0, best.d - t.size / 2), q: best.q};
+  }
+  return {d: Math.max(0, Math.hypot(p[0] - t.x, p[1] - t.y) - t.size / 2), q: [t.x, t.y]};
+}
+// How close counts as "at" an item. With GPS: the reported accuracy (min 4 m, max 15 m) converted to sheet pixels.
+function snapRadius() {
+  if (T && pos) return Math.max(4, Math.min(pos.acc || 5, 15)) * Math.hypot(T.ar, T.ai);
+  return ov.width * 0.03;
+}
+function nearestTarget(p) {
+  const R = snapRadius(); let best = null, n = 0;
+  liveTargets().forEach(t => { const r = distToTarget(t, p); if (r.d <= R) { n++; if (!best || r.d < best.d) best = {t, pt: r.q, d: r.d}; } });
+  if (best) best.count = n;
+  return best;
+}
+function refreshNear() { const p = curPx(); near = p ? nearestTarget(p) : null; }
+function nearText() { return near ? " | At: " + near.t.label + (near.count > 1 ? " (+" + (near.count - 1) + " nearby)" : "") : (liveTargets().length ? " | Not near a planned item" : ""); }
+// Tap/click on a planned item (a little beyond its edge so fingers can hit it).
+function hitTarget(p) {
+  const tol = Math.max(cssPx(12), 6); let best = null;                      // about a fingertip beyond the edge; the nearest item wins
+  liveTargets().forEach(t => { const d = distToTarget(t, p).d; if (d <= tol && (!best || d <= best.d)) best = {t, d}; });
+  return best;
+}
+// ---- overlap rules: planned items may not sit on top of each other ----
+const segsCross = (p1, p2, p3, p4) => {
+  const o = (a, b, c) => Math.sign((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]));
+  return o(p1, p2, p3) !== o(p1, p2, p4) && o(p3, p4, p1) !== o(p3, p4, p2);
+};
+const segSegDist = (a, b, c, d) => segsCross(a, b, c, d) ? 0 : Math.min(distSeg(a, c, d).d, distSeg(b, c, d).d, distSeg(c, a, b).d, distSeg(d, a, b).d);
+function polyDist(A, B) {
+  let m = 1e12;
+  for (let i = 0; i < A.length - 1; i++) for (let j = 0; j < B.length - 1; j++) m = Math.min(m, segSegDist(A[i], A[i + 1], B[j], B[j + 1]));
+  return m;
+}
+function shapeOverlap(a, b) {
+  if (a.shape === "highlight" || b.shape === "highlight") {
+    if (a.shape !== "highlight") [a, b] = [b, a];                            // a is the highlight
+    if (b.shape === "highlight") return polyDist(a.pts, b.pts) < (a.size + b.size) / 2;
+    let d = 1e12; for (let i = 0; i < a.pts.length - 1; i++) d = Math.min(d, distSeg([b.x, b.y], a.pts[i], a.pts[i + 1]).d);
+    return d < (a.size + b.size) / 2;
+  }
+  if (a.shape === "circle" && b.shape === "circle") return Math.hypot(a.x - b.x, a.y - b.y) < (a.size + b.size) / 2;
+  if (a.shape === "square" && b.shape === "square") return Math.abs(a.x - b.x) < (a.size + b.size) / 2 && Math.abs(a.y - b.y) < (a.size + b.size) / 2;
+  const s = a.shape === "square" ? a : b, c = a.shape === "square" ? b : a;     // square vs circle
+  const nx = clamp(c.x, s.x - s.size / 2, s.x + s.size / 2), ny = clamp(c.y, s.y - s.size / 2, s.y + s.size / 2);
+  return Math.hypot(c.x - nx, c.y - ny) < c.size / 2;
+}
+const overlapsOther = (cand, ignoreId) => liveTargets().find(t => t.id !== ignoreId && shapeOverlap(cand, t)) || null;
+const snapOf = t => ({x: t.x, y: t.y, size: t.size, pts: t.pts ? t.pts.map(q => q.slice()) : undefined});
+// ---- selecting, erasing, undo ----
+function selectTarget(id) {
+  selId = id; eraseOn = false; hlDraft = []; planMsg("");
+  const t = selTarget(); if (t) $("pSize").value = sliderFromSize(t);
+  renderPlan();
+}
+function eraseTarget(t) {
+  const n = updates.filter(u => u.targetId === t.id).length;
+  if (n && !confirm(t.label + " has " + n + " update" + (n === 1 ? "" : "s") + ". Erase it anyway? Its updates are kept in the records.")) return;
+  t.deleted = true; t.deletedAt = new Date().toISOString(); planActs.push({k: "del", id: t.id});
+  if (selId === t.id) selId = null;
+  saveState(); planMsg("Erased " + t.label + ". Undo brings it back."); renderPlan();
+}
+function planTap(p) {
+  if (eraseOn) {
+    const hit = hitTarget(p);
+    if (hit) eraseTarget(hit.t); else planMsg("Erase is ON: tap a planned item to erase it.");
+    return;
+  }
+  if (tool === "highlight" && hlDraft.length) { hlDraft.push(p); planMsg(""); renderPlan(); return; }   // building a line
+  const hit = hitTarget(p);
+  if (hit) { selectTarget(hit.t.id); return; }                              // tap an existing item: select it, never stack a new one
+  if (selId) { selId = null; planMsg(""); renderPlan(); return; }           // tap empty space: just deselect
+  if (tool === "highlight") { hlDraft.push(p); planMsg(""); renderPlan(); return; }
+  const scope = $("pScope").value;
+  if (!scope) return planMsg("Add a category first: type a name above and tap Add category.");
+  const size = planSize(), x = clamp(p[0], 0, ov.width), y = clamp(p[1], 0, ov.height);
+  const clash = overlapsOther({shape: tool, x, y, size}, null);
+  if (clash) return planMsg("That spot overlaps " + clash.label + ". Tap it to move or resize it, or lower Size.");
+  const t = {id: newId("tgt"), scope, label: nextLabel(scope), shape: tool, x, y, size, createdAt: new Date().toISOString(), deleted: false};
+  targets.push(t); planActs.push({k: "add", id: t.id}); saveState(); planMsg(""); renderPlan();
+}
+function finishLine() {
+  if (hlDraft.length < 2) return alert("Tap at least two points along the line first.");
+  const scope = $("pScope").value; if (!scope) return planMsg("Add a category first: type a name above and tap Add category.");
+  const pts = hlDraft.slice(), size = planSize() * 0.8;
+  const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length, cy = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+  const clash = overlapsOther({shape: "highlight", pts, size, x: cx, y: cy}, null);
+  if (clash) return planMsg("That line overlaps " + clash.label + ". Undo the last point, or lower Size.");
+  const t = {id: newId("tgt"), scope, label: nextLabel(scope), shape: "highlight", pts, x: cx, y: cy, size, createdAt: new Date().toISOString(), deleted: false};
+  targets.push(t); planActs.push({k: "add", id: t.id}); hlDraft = []; saveState(); planMsg(""); renderPlan();
+}
+function renderPlan() {
+  const B = $("pTools"); B.innerHTML = "";
+  TOOLS.forEach(([k, l]) => B.append(chipBtn(l, tool === k && !eraseOn, () => { tool = k; eraseOn = false; hlDraft = []; selId = null; planMsg(""); renderPlan(); })));
+  const er = chipBtn(eraseOn ? "Erase: ON" : "Erase", eraseOn, () => { eraseOn = !eraseOn; hlDraft = []; selId = null; planMsg(eraseOn ? "Erase is ON: tap a planned item to erase it. Tap Erase again to turn it off." : ""); renderPlan(); });
+  er.classList.add("danger"); er.setAttribute("aria-pressed", eraseOn ? "true" : "false"); B.append(er);
+  $("pFinish").hidden = !(tool === "highlight" && !eraseOn && !selId);
+  const st = selTarget(); if (selId && !st) selId = null;
+  $("pSel").hidden = !st;
+  if (st) { $("selLabel").textContent = st.label + " (" + st.scope + ")"; $("pSize").value = sliderFromSize(st); $("sizeLbl").textContent = "Size of " + st.label; }
+  else { $("pSize").value = defSizeV; $("sizeLbl").textContent = "Size"; }
+  ov.style.touchAction = (mode === "plan" && st) ? "none" : "";           // lets a finger drag the selected item instead of scrolling
+  const L = liveTargets(), by = {}; L.forEach(t => by[t.scope] = (by[t.scope] || 0) + 1);
+  $("pInfo").textContent = L.length ? "Planned: " + L.length + " items (" + Object.keys(by).map(k => k + " " + by[k]).join(", ") + ")" : "No items planned yet.";
+  draw();
+}
+$("pFinish").onclick = finishLine;
+$("pAdd").onclick = () => {
+  const w = $("pNew").value.trim(); if (!w) return;
+  if (!SCOPES.some(s => s.toLowerCase() === w.toLowerCase())) SCOPES.push(w);
+  $("pNew").value = ""; saveState(); renderScopeSelects(); $("pScope").value = SCOPES.find(s => s.toLowerCase() === w.toLowerCase());
+};
+$("pUndo").onclick = () => {
+  if (hlDraft.length) { hlDraft.pop(); return renderPlan(); }
+  const a = planActs.pop(); if (!a) return planMsg("Nothing to undo.");
+  const t = targets.find(x => x.id === a.id); if (!t) return;
+  if (a.k === "add") { t.deleted = true; t.deletedAt = new Date().toISOString(); if (selId === t.id) selId = null; planMsg("Removed " + t.label + "."); }
+  else if (a.k === "del") { t.deleted = false; delete t.deletedAt; planMsg("Restored " + t.label + "."); }
+  else if (a.k === "edit") { Object.assign(t, a.prev); if (!a.prev.pts) delete t.pts; planMsg("Reverted " + t.label + "."); if (t.shape === "highlight") { t.x = t.pts.reduce((s, q) => s + q[0], 0) / t.pts.length; t.y = t.pts.reduce((s, q) => s + q[1], 0) / t.pts.length; } }
+  saveState(); renderPlan();
+};
+$("pClear").onclick = () => {
+  if (!liveTargets().length || !confirm("Remove all planned items on this sheet? Existing updates are kept.")) return;
+  liveTargets().forEach(t => { t.deleted = true; t.deletedAt = new Date().toISOString(); }); selId = null; planActs = []; saveState(); renderPlan();
+};
+// "In progress" weighting is project-wide and lives in Setup > Project settings.
+$("pPct").onchange = () => { PCT["In progress"] = clamp(parseInt($("pPct").value, 10) || 0, 0, 100); $("pPct").value = PCT["In progress"]; saveState(); if (cur) { renderPlan(); draw(); } };
+$("selDone").onclick = () => { selId = null; planMsg(""); renderPlan(); };
+$("selDel").onclick = () => { const t = selTarget(); if (t) eraseTarget(t); };
+// Size slider: resizes the selected item, otherwise sets the size for new items.
+let sizeBurst = null;
+$("pSize").oninput = () => {
+  const v = +$("pSize").value, t = selTarget();
+  if (!t) { defSizeV = v; return; }
+  const cand = {...t, size: sizeFromSlider(t, v)};
+  const clash = overlapsOther(cand, t.id);
+  if (clash) { planMsg("Cannot get bigger: it would overlap " + clash.label + "."); $("pSize").value = sliderFromSize(t); return; }
+  if (!sizeBurst) sizeBurst = snapOf(t);
+  t.size = cand.size; planMsg(""); draw();
+};
+$("pSize").onchange = () => {
+  const t = selTarget(); if (!t || !sizeBurst) { sizeBurst = null; return; }
+  if (sizeBurst.size !== t.size) { planActs.push({k: "edit", id: t.id, prev: sizeBurst}); (t.history = t.history || []).push({time: new Date().toISOString(), type: "resize", size: t.size}); saveState(); }
+  sizeBurst = null;
+};
+// Drag the selected item to move it, or drag its corner handle to resize it.
+let drag = null;
+const handlePos = t => { const o = cssPx(9); return [t.x + t.size / 2 + o, t.y + t.size / 2 + o]; };   // sits just outside the bottom-right corner
+ov.addEventListener("pointerdown", e => {
+  if (mode !== "plan" || eraseOn) return;
+  const t = selTarget(); if (!t) return;
+  const p = tapPoint(e), tol = Math.max(cssPx(12), 6), hp = handlePos(t);
+  let kind = null;
+  if (t.shape !== "highlight" && Math.hypot(p[0] - hp[0], p[1] - hp[1]) <= cssPx(16)) kind = "size";
+  else if (distToTarget(t, p).d <= tol) kind = "move";
+  if (!kind) return;
+  drag = {kind, id: t.id, p0: p, off: [p[0] - hp[0], p[1] - hp[1]], hd: cssPx(9), cx: e.clientX, cy: e.clientY, start: snapOf(t), moved: false};
+  try { ov.setPointerCapture(e.pointerId); } catch (err) {}
+});
+ov.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const t = targets.find(x => x.id === drag.id); if (!t) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.cx, e.clientY - drag.cy) < 4) return;   // ignore finger jitter
+  drag.moved = true;
+  const p = tapPoint(e); let cand;
+  if (drag.kind === "size") {
+    const lim = [ov.width * 0.005, ov.width * 0.06];
+    const cxn = p[0] - drag.off[0] - drag.hd, cyn = p[1] - drag.off[1] - drag.hd;                  // where the corner would be
+    cand = {...t, size: clamp(2 * Math.max(Math.abs(cxn - t.x), Math.abs(cyn - t.y)), lim[0], lim[1])};
+  } else {
+    let dx = p[0] - drag.p0[0], dy = p[1] - drag.p0[1];
+    if (t.shape === "highlight") {
+      const xs = drag.start.pts.map(q => q[0]), ys = drag.start.pts.map(q => q[1]);
+      dx = clamp(dx, -Math.min(...xs), ov.width - Math.max(...xs)); dy = clamp(dy, -Math.min(...ys), ov.height - Math.max(...ys));
+      const pts = drag.start.pts.map(q => [q[0] + dx, q[1] + dy]);
+      cand = {...t, pts, x: drag.start.x + dx, y: drag.start.y + dy};
+    } else cand = {...t, x: clamp(drag.start.x + dx, 0, ov.width), y: clamp(drag.start.y + dy, 0, ov.height)};
+  }
+  const clash = overlapsOther(cand, t.id);
+  if (clash) { planMsg("Blocked: it would overlap " + clash.label + "."); return; }       // stays at the last valid spot
+  planMsg(""); t.x = cand.x; t.y = cand.y; t.size = cand.size; if (cand.pts) t.pts = cand.pts;
+  if (drag.kind === "size") $("pSize").value = sliderFromSize(t);
+  draw();
+});
+const endDrag = () => {
+  if (!drag) return;
+  const t = targets.find(x => x.id === drag.id), moved = drag.moved;
+  if (moved && t) {
+    planActs.push({k: "edit", id: t.id, prev: drag.start});
+    (t.history = t.history || []).push({time: new Date().toISOString(), type: drag.kind === "size" ? "resize" : "move", x: t.x, y: t.y, size: t.size});
+    saveState();
+  }
+  drag = null;
+  if (moved) { suppressClick = true; setTimeout(() => { suppressClick = false; }, 60); renderPlan(); }   // swallow the click that follows a drag
+};
+ov.addEventListener("pointerup", endDrag);
+ov.addEventListener("pointercancel", endDrag);
+// ---------- PROGRESS ----------
+// Status of an item = its latest update. Official = accepted updates only. "Incl. pending" = anything not rejected.
+// Issue counts 0% until a later update (e.g. Complete) resolves it. Notes never change status.
+function itemStatus(t, officialOnly) {
+  const ups = updates.filter(u => u.targetId === t.id && u.status !== "Note" && (officialOnly ? u.state === "accepted" : u.state !== "rejected"));
+  if (!ups.length) return null;
+  return ups.sort((a, b) => a.time.localeCompare(b.time))[ups.length - 1].status;
+}
+function progress() {
+  const L = liveTargets(), o = {n: L.length, off: 0, inc: 0, reviewed: 0, issues: 0, by: {}};
+  L.forEach(t => {
+    const so = itemStatus(t, true), si = itemStatus(t, false), po = so ? PCT[so] || 0 : 0, pi = si ? PCT[si] || 0 : 0;
+    o.off += po; o.inc += pi; if (si) o.reviewed++; if (si === "Issue") o.issues++;
+    const b = o.by[t.scope] = o.by[t.scope] || {n: 0, off: 0}; b.n++; b.off += po;
+  });
+  return o;
+}
+function renderProgress() {
+  const g = progress(); $("progBar").hidden = !g.n; if (!g.n) return;
+  const off = Math.round(g.off / g.n), inc = Math.round(g.inc / g.n);
+  $("progTxt").textContent = "Progress " + off + "% official";
+  $("progCnt").textContent = g.reviewed + " of " + g.n + " reviewed" + (g.issues ? " | " + g.issues + " open issue" + (g.issues > 1 ? "s" : "") : "");
+  $("progOff").style.width = off + "%"; $("progPend").style.width = inc + "%";
+  $("progSub").textContent = (inc !== off ? inc + "% incl. pending. " : "") + Object.keys(g.by).map(k => k + " " + Math.round(g.by[k].off / g.by[k].n) + "% (" + g.by[k].n + ")").join(" | ");
+}
+// ---------- KEYWORDS (Setup > Keywords) ----------
+// Global keywords apply to every category by default. A category set to Custom uses ONLY its own keywords instead.
+const KW_STATUSES = ["Not started", "In progress", "Complete", "Issue"];
+const kwOpen = {};                                                  // remembers which groups the user opened
+const kwScopeOf = k => (k.scope && k.scope !== "All") ? k.scope : "All";
+const isCustom = sc => CATMODE[sc] === "custom";
+const kwNote = m => { $("kwNote").textContent = m || ""; };
+function chipEl(label, onRemove, off) {
+  const d = document.createElement("span"); d.className = "kw" + (off ? " off" : ""); d.append(document.createTextNode(label));
+  if (onRemove) { const x = document.createElement("button"); x.type = "button"; x.textContent = "\u00d7"; x.setAttribute("aria-label", "Remove " + label); x.onclick = onRemove; d.append(x); }
+  return d;
+}
+function fillSel(sel, pairs) {
+  const keep = sel.value; sel.innerHTML = ""; pairs.forEach(([v, l]) => sel.add(new Option(l, v)));
+  if (pairs.some(x => x[0] === keep)) sel.value = keep;
+}
+function setCatMode(sc, m) {
+  if (m === "custom") CATMODE[sc] = "custom"; else delete CATMODE[sc];
+  kwOpen[sc] = true; kwNote(""); saveState(); renderKeywords();
+}
+function copyGlobalTo(sc) {
+  KW.filter(k => kwScopeOf(k) === "All").forEach(k => { if (!KW.some(x => kwScopeOf(x) === sc && x.word === k.word)) KW.push({word: k.word, status: k.status, scope: sc}); });
+  kwNote("Copied the global keywords into " + sc + ". Edit them as you like."); saveState(); renderKeywords();
+}
+function kwGroup(scope, label, forceOpen) {
+  const list = KW.filter(k => kwScopeOf(k) === scope), isCat = scope !== "All", custom = isCat && isCustom(scope);
+  const d = document.createElement("details"); d.open = forceOpen || !!kwOpen[scope];
+  const sm = document.createElement("summary"); sm.textContent = label + " (" + list.length + ")" + (isCat ? " \u00b7 " + (custom ? "Custom" : "Global") : "");
+  sm.onclick = () => { kwOpen[scope] = !d.open; }; d.append(sm);
+  const note = (txt) => { const p = document.createElement("p"); p.className = "h"; p.textContent = txt; d.append(p); };
+  if (isCat) {
+    const row = document.createElement("div"); row.className = "row";
+    const lab = document.createElement("span"); lab.className = "h"; lab.textContent = scope + " uses:"; row.append(lab);
+    row.append(chipBtn("Global", !custom, () => setCatMode(scope, "global")), chipBtn("Custom", custom, () => setCatMode(scope, "custom")));
+    d.append(row);
+    if (custom) note(list.length ? "These keywords replace the global ones for " + scope + "." : "Custom with no keywords: nothing will be logged for " + scope + " until you add some.");
+    else note(list.length ? "Inactive: " + scope + " uses the global keywords. Switch to Custom to use these instead." : scope + " uses the global keywords. Switch to Custom to give it its own.");
+    if (custom && !list.length) { const b = document.createElement("button"); b.type = "button"; b.textContent = "Copy the global keywords here as a starting point"; b.onclick = () => copyGlobalTo(scope); d.append(b); }
+  } else note("The default for every category that is not set to Custom.");
+  KW_STATUSES.forEach(st => {
+    const ws = list.filter(k => k.status === st); if (!ws.length) return;
+    const row = document.createElement("div"); row.className = "row"; row.style.marginTop = "8px";
+    const lab = document.createElement("span"); lab.textContent = st; lab.style.cssText = "font-weight:600;min-width:88px;border-left:5px solid " + STATUS[st] + ";padding-left:6px";
+    row.append(lab);
+    ws.forEach(k => row.append(chipEl(k.word, () => { KW = KW.filter(x => x !== k); saveState(); renderKeywords(); }, isCat && !custom)));
+    d.append(row);
+  });
+  return d;
+}
+function renderKeywords() {
+  fillSel($("kwView"), [["", "Overview (all groups)"], ["All", "Global (default)"]].concat(SCOPES.map(x => [x, x])));
+  fillSel($("kwScope"), [["All", "Global (all categories)"]].concat(SCOPES.map(x => [x, x])));
+  fillSel($("kwStatus"), KW_STATUSES.map(x => [x, x]));
+  $("kwHint").textContent = SCOPES.length ? "" : "No categories yet. Open Categories below to add one. Every category uses the global keywords until you switch it to Custom.";
+  const view = $("kwView").value, G = $("kwGroups"); G.innerHTML = "";
+  if (view === "") { G.append(kwGroup("All", "Global (default)")); SCOPES.forEach(sc => G.append(kwGroup(sc, sc))); }
+  else if (view === "All") G.append(kwGroup("All", "Global (default)", true));
+  else { G.append(kwGroup(view, view, true)); if (!isCustom(view)) G.append(kwGroup("All", "Global (in use for " + view + ")")); }
+  const S = $("scList"); S.innerHTML = "";
+  SCOPES.forEach(sc => S.append(chipEl(sc, () => {
+    const n = KW.filter(k => kwScopeOf(k) === sc).length;
+    if (n && !confirm("Remove category " + sc + " and its " + n + " keywords? Existing updates are kept.")) return;
+    SCOPES = SCOPES.filter(x => x !== sc); KW = KW.filter(k => kwScopeOf(k) !== sc); delete CATMODE[sc];
+    saveState(); renderScopeSelects(); renderKeywords();
+  })));
+}
+$("kwView").onchange = () => { kwNote(""); renderKeywords(); };
+$("kwAdd").onclick = () => {
+  const w = $("kwNew").value.trim().toLowerCase().replace(/\s+/g, " "); if (!w || w === "note") return;
+  const sc = $("kwScope").value || "All";
+  KW = KW.filter(k => !(k.word === w && kwScopeOf(k) === sc)); KW.push({word: w, status: $("kwStatus").value, scope: sc});
+  if (sc !== "All" && !isCustom(sc)) { CATMODE[sc] = "custom"; kwNote(sc + " now uses its own keywords (Custom) instead of the global ones. Switch it back to Global any time."); }
+  else kwNote("");
+  $("kwNew").value = ""; kwOpen[sc] = true; saveState(); renderKeywords();
+};
+$("scAdd").onclick = () => {
+  const w = $("scNew").value.trim(); if (!w || SCOPES.some(s => s.toLowerCase() === w.toLowerCase())) return;
+  SCOPES.push(w); $("scNew").value = ""; saveState(); renderScopeSelects(); renderKeywords();
+};
+$("kwReset").onclick = () => {
+  if (!confirm("Reset keywords to the global defaults and remove all categories?")) return;
+  KW = DEFAULT_KW.map(k => ({...k})); SCOPES = []; CATMODE = {}; kwNote(""); saveState(); renderScopeSelects(); renderKeywords();
+};
+// ---- Excel / CSV import (no libraries: tiny zip + XML reader; .xlsx is a zip of XML) ----
+async function zipEntries(buf) {
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  let e = u8.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error("not a valid .xlsx file");
+  const n = dv.getUint16(e + 10, true); let q = dv.getUint32(e + 16, true); const ents = {};
+  for (let i = 0; i < n && dv.getUint32(q, true) === 0x02014b50; i++) {
+    const nl = dv.getUint16(q + 28, true), el2 = dv.getUint16(q + 30, true), cl = dv.getUint16(q + 32, true);
+    ents[new TextDecoder().decode(u8.subarray(q + 46, q + 46 + nl))] = {method: dv.getUint16(q + 10, true), csize: dv.getUint32(q + 20, true), lo: dv.getUint32(q + 42, true)};
+    q += 46 + nl + el2 + cl;
+  }
+  const read = async name => {
+    const t = ents[name]; if (!t) return null;
+    const st = t.lo + 30 + dv.getUint16(t.lo + 26, true) + dv.getUint16(t.lo + 28, true), data = u8.subarray(st, st + t.csize);
+    if (t.method === 0) return new TextDecoder().decode(data);
+    if (t.method !== 8 || typeof DecompressionStream === "undefined") throw new Error("this browser cannot open .xlsx; save as CSV instead");
+    const out = await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer();
+    return new TextDecoder().decode(out);
+  };
+  return {names: Object.keys(ents), read};
+}
+async function readXlsxRows(buf) {
+  const z = await zipEntries(buf), xml = t => new DOMParser().parseFromString(t, "application/xml");
+  const wb = xml(await z.read("xl/workbook.xml")), rels = xml(await z.read("xl/_rels/workbook.xml.rels"));
+  const sheetsX = [...wb.getElementsByTagName("sheet")];
+  const sh = sheetsX.find(x => /^keywords$/i.test(x.getAttribute("name"))) || sheetsX[0];
+  if (!sh) throw new Error("no sheets found");
+  let rid = sh.getAttribute("r:id"); if (!rid) for (const a of sh.attributes) if (/:id$/.test(a.name)) rid = a.value;
+  const rel = [...rels.getElementsByTagName("Relationship")].find(r => r.getAttribute("Id") === rid);
+  let path = rel.getAttribute("Target").replace(/^\//, ""); if (!path.startsWith("xl/")) path = "xl/" + path;
+  const ssT = await z.read("xl/sharedStrings.xml");
+  const SS = ssT ? [...xml(ssT).getElementsByTagName("si")].map(si => [...si.getElementsByTagName("t")].map(t => t.textContent).join("")) : [];
+  const rows = [];
+  [...xml(await z.read(path)).getElementsByTagName("row")].forEach(r => {
+    const rn = parseInt(r.getAttribute("r"), 10) || (rows.length + 1), arr = [];
+    [...r.getElementsByTagName("c")].forEach(c => {
+      const col = (c.getAttribute("r") || "").replace(/[0-9]/g, "").split("").reduce((a, ch) => a * 26 + ch.charCodeAt(0) - 64, 0) - 1;
+      const t = c.getAttribute("t"), v = c.getElementsByTagName("v")[0], is = c.getElementsByTagName("is")[0];
+      arr[col >= 0 ? col : arr.length] = t === "s" ? SS[+v.textContent] : t === "inlineStr" && is ? [...is.getElementsByTagName("t")].map(x => x.textContent).join("") : (v ? v.textContent : "");
+    });
+    rows[rn - 1] = arr;
+  });
+  return rows;
+}
+function parseCsv(t) {
+  t = t.replace(/^\uFEFF/, ""); const rows = []; let row = [], cur2 = "", q = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { cur2 += '"'; i++; } else q = false; } else cur2 += c; }
+    else if (c === '"') q = true;
+    else if (c === "," || c === ";" || c === "\t") { row.push(cur2); cur2 = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && t[i + 1] === "\n") i++; row.push(cur2); rows.push(row); row = []; cur2 = ""; }
+    else cur2 += c;
+  }
+  if (cur2 || row.length) { row.push(cur2); rows.push(row); }
+  return rows;
+}
+function importKeywords(rows, replace) {
+  const stat = {}; KW_STATUSES.forEach(x => stat[x.toLowerCase()] = x);
+  const out = [], bad = [], addScopes = [];
+  rows.forEach((r, i) => {
+    r = r || []; const [sc, w, st] = [0, 1, 2].map(j => String(r[j] == null ? "" : r[j]).trim());
+    if (!sc && !w && !st) return;
+    if (i === 0 && /^(scope|category)$/i.test(sc) && /^keyword/i.test(w)) return;          // header row
+    const status = stat[st.toLowerCase()], word = w.toLowerCase().replace(/\s+/g, " ");
+    if (!word || word === "note" || !status) { bad.push(i + 1); return; }
+    let scope = "All";
+    if (sc && !/^(all|global|all scopes|all categories|any)$/i.test(sc)) {
+      const ex = SCOPES.concat(addScopes).find(x => x.toLowerCase() === sc.toLowerCase());
+      if (ex) scope = ex; else { scope = sc; addScopes.push(sc); }
+    }
+    out.push({word, status, scope});
+  });
+  if (!out.length) return {added: 0, bad, addScopes: [], custom: []};
+  addScopes.forEach(x => SCOPES.push(x));
+  if (replace) { KW = []; CATMODE = {}; }
+  out.forEach(o => { KW = KW.filter(k => !(k.word === o.word && kwScopeOf(k) === o.scope)); KW.push(o); });
+  const custom = uniq(out.filter(o => o.scope !== "All").map(o => o.scope));      // a category with its own rows becomes Custom
+  custom.forEach(sc => { CATMODE[sc] = "custom"; });
+  saveState(); renderScopeSelects();
+  return {added: out.length, bad, addScopes, custom};
+}
+$("kwFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return; const msg = $("kwMsg");
+  try {
+    const rows = /\.csv$/i.test(f.name) ? parseCsv(await f.text()) : await readXlsxRows(await f.arrayBuffer());
+    const r = importKeywords(rows, $("kwReplace").checked);
+    msg.textContent = r.added
+      ? "Imported " + r.added + " keywords" + (r.addScopes.length ? "; new categories: " + r.addScopes.join(", ") : "") + (r.custom.length ? "; now Custom: " + r.custom.join(", ") : "") + (r.bad.length ? ". Skipped rows (bad status or blank keyword): " + r.bad.slice(0, 8).join(", ") + (r.bad.length > 8 ? "..." : "") : ".")
+      : "No valid rows found. Nothing changed." + (r.bad.length ? " Check the Status column on rows " + r.bad.slice(0, 8).join(", ") + "." : "");
+  } catch (err) { msg.textContent = "Could not read file: " + err.message; }
+  e.target.value = ""; renderKeywords();
+};
+$("kwTpl").onclick = () => {
+  const lines = ["Scope,Keyword,Status"].concat(KW.map(k => [kwScopeOf(k), k.word, k.status].map(x => '"' + x.replace(/"/g, '""') + '"').join(",")));
+  dl("walkdown-keywords.csv", new Blob(["\uFEFF" + lines.join("\r\n")], {type: "text/csv"}));
+};
+function renderWalkMeta() {
+  $("walkMeta").textContent = walks.length
+    ? walks.map((w, i) => `Walk ${i + 1}: ${w.startedAt}${w.finishedAt ? " to " + w.finishedAt : " (open)"}`).join(" | ")
+    : "No saved walks yet.";
+}
+// ---------- PHOTO LOG ----------
+// Phone photos are several MB; shrink them so storage does not fill up after a few pictures.
+function shrinkImage(file, maxDim, q) {
+  maxDim = maxDim || 1280; q = q || 0.72;
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, maxDim / Math.max(im.width, im.height)), c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res(c.toDataURL("image/jpeg", q));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); rej(new Error("unsupported image")); };
+    im.src = url;
+  });
+}
+$("photo").onclick = () => $("camera").click();
+$("camera").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    refreshNear();
+    const url = await shrinkImage(f), p = near ? near.pt : curPx();      // near a planned item: the photo belongs to it
+    const ph = {id: newId("photo"), walkId: currentWalk ? currentWalk.id : null, time: new Date().toISOString(), dataUrl: url,
+      x: p ? p[0] : null, y: p ? p[1] : null, lat: pos ? pos.lat : null, lon: pos ? pos.lon : null,
+      targetId: near ? near.t.id : null, item: near ? near.t.label : null};
+    photos.push(ph); putPhoto(ph); saveState(); draw();
+    $("st").textContent = near ? "Photo saved to " + near.t.label + "." : p ? "Photo saved at current position." : "Photo saved (no position yet).";
+  } catch (err) { $("st").textContent = "Could not read that photo: " + err.message; }
+};
+// Tap a camera marker to view its photo (in-page viewer, works on phones). Photos on a planned item open from that item instead.
+function photoAt(p) {
+  const tol = Math.max(24, ov.width / 40);
+  return photos.slice().reverse().find(x => !x.targetId && x.dataUrl && x.x != null && Math.hypot(x.x - p[0], x.y - p[1]) < tol);
+}
+function showPhoto(ph) {
+  if (!ph.dataUrl) return;
+  const v = document.createElement("div");
+  v.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px";
+  const im = document.createElement("img"); im.src = ph.dataUrl; im.style.cssText = "max-width:100%;max-height:80%";
+  const cap = document.createElement("div"); cap.style.color = "#fff"; cap.textContent = (ph.item ? ph.item + "  \u2022  " : "") + new Date(ph.time).toLocaleString() + " (tap to close)";
+  v.append(im, cap); v.onclick = () => v.remove(); document.body.appendChild(v);
+}
+// ---------- REVIEW ----------
+const STATE_LABEL = {pending: "In Review", accepted: "Accepted", rejected: "Rejected"};
+const filt = {state: "pending", status: "All"};
+function setState(u, to) {
+  (u.history = u.history || []).push({time: new Date().toISOString(), from: u.state, to, status: u.status});
+  u.state = to; u.changedAt = new Date().toISOString();
+  saveState(); renderList(); draw();
+}
+function chipBtn(label, on, fn) { const b = document.createElement("button"); b.type = "button"; b.className = "chip" + (on ? " on" : ""); b.textContent = label; b.onclick = fn; return b; }
+function renderList() {
+  const scopeF = $("fScope").value || "All";
+  const inState = updates.filter(u => u.state === filt.state);
+  $("fState").innerHTML = ""; $("fStatus").innerHTML = "";
+  Object.keys(STATE_LABEL).forEach(k => $("fState").append(chipBtn(STATE_LABEL[k] + " (" + updates.filter(u => u.state === k).length + ")", filt.state === k, () => { filt.state = k; renderList(); })));
+  ["All"].concat(Object.keys(STATUS)).forEach(k => $("fStatus").append(chipBtn(k + " (" + (k === "All" ? inState.length : inState.filter(u => u.status === k).length) + ")", filt.status === k, () => { filt.status = k; renderList(); })));
+  const shown = inState.filter(u => (filt.status === "All" || u.status === filt.status) && (scopeF === "All" || u.scope === scopeF))
+    .sort((a, b) => b.time.localeCompare(a.time));
+  const L = $("list"); L.innerHTML = "";
+  if (!shown.length) { const p = document.createElement("p"); p.className = "h"; p.textContent = "Nothing here."; L.append(p); }
+  shown.forEach(u => {
+    const d = document.createElement("div"); d.className = "item"; d.style.borderColor = STATUS[u.status] || "#888";
+    const mkEl = (tag, txt, cls) => { const e = document.createElement(tag); e.textContent = txt; if (cls) e.className = cls; return e; };
+    d.append(mkEl("b", u.item || u.scope), mkEl("span", u.status + (u.due ? "  \u2022  due " + u.due : "")));
+    if (u.note) { const n = mkEl("span", u.note); n.style.gridColumn = "1/-1"; d.append(n); }
+    const ups = photos.filter(p => p.updateId === u.id && p.dataUrl);
+    if (ups.length) {
+      const th = document.createElement("div"); th.className = "row thumbs"; th.style.gridColumn = "1/-1";
+      ups.forEach(ph => { const im = document.createElement("img"); im.src = ph.dataUrl; im.alt = "Photo"; im.onclick = () => showPhoto(ph); th.append(im); });
+      d.append(th);
+    }
+    const q = mkEl("small", "\u201c" + (u.text || "") + "\u201d  \u2022  " + new Date(u.time).toLocaleString()); q.style.gridColumn = "1/-1"; d.append(q);
+    const row = document.createElement("div"); row.className = "row";
+    const sel = document.createElement("select");
+    Object.keys(STATUS).forEach(s => sel.add(new Option(s, s, false, s === u.status)));
+    sel.onchange = () => { (u.history = u.history || []).push({time: new Date().toISOString(), field: "status", from: u.status, to: sel.value}); u.status = sel.value; u.changedAt = new Date().toISOString(); saveState(); renderList(); draw(); };
+    row.append(sel);
+    if (u.state === "pending") {
+      const ok = mkEl("button", "Accept", "pri"), no = mkEl("button", "Reject");
+      ok.onclick = () => setState(u, "accepted"); no.onclick = () => setState(u, "rejected"); row.append(ok, no);
+    } else { const back = mkEl("button", "Move to In Review"); back.onclick = () => setState(u, "pending"); row.append(back); }
+    d.append(row); L.append(d);
+  });
+  updateMapInfo(); draw();
+}
+$("fScope").onchange = renderList;
+// Review map: which planned items match the current In Review/Accepted/Rejected + status + category filters.
+// Returns the update that decides the item's colour (latest in the selected state), or null if it should be dimmed.
+function reviewMatch(t) {
+  const sf = $("fScope").value || "All";
+  if (sf !== "All" && t.scope !== sf) return null;
+  let ups = updates.filter(u => u.targetId === t.id && u.state === filt.state);
+  ups = filt.status === "Note" ? ups.filter(u => u.status === "Note") : ups.filter(u => u.status !== "Note");
+  if (!ups.length) return null;
+  const last = ups.sort((a, b) => a.time.localeCompare(b.time))[ups.length - 1];
+  return (filt.status === "All" || filt.status === "Note" || last.status === filt.status) ? last : null;
+}
+function reviewShowsLoose(u) {                                           // updates not tied to a planned item
+  const sf = $("fScope").value || "All";
+  return u.state === filt.state && (filt.status === "All" || u.status === filt.status) && (sf === "All" || u.scope === sf);
+}
+function updateMapInfo() {
+  const T2 = liveTargets(), m = T2.filter(t => reviewMatch(t)).length, loose = updates.filter(u => !u.targetId && u.x != null && reviewShowsLoose(u)).length;
+  $("mapInfo").textContent = T2.length ? "Map: " + m + " of " + T2.length + " planned items match" + (loose ? " (+" + loose + " position-only)" : "") + ". Others are dimmed." : "";
+}
+const dl = (name, blob) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); };
+$("csv").onclick = () => {
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["sheet","time","walk_id","source","item","scope","status","state","note","due","transcript","x_px","y_px","raw_x_px","raw_y_px","snap_dist_m","lat","lon"]].concat(
+    updates.map(u => [sheetName, u.time, u.walkId, u.source || "voice", u.item, u.scope, u.status, u.state, u.note, u.due, u.text, u.x, u.y, u.rawX, u.rawY, u.snapDistM, u.lat, u.lon]));
+  dl("walkdown-" + (sheetName || "sheet").replace(/[^\w.-]+/g, "_") + ".csv", new Blob([rows.map(r => r.map(q).join(",")).join("\n")], {type: "text/csv"}));
+};
+$("png").onclick = () => {
+  const c = document.createElement("canvas"); c.width = base.width; c.height = base.height;
+  const x = c.getContext("2d"); x.drawImage(base, 0, 0); x.drawImage(ov, 0, 0);
+  c.toBlob(b => dl("walkdown-" + (sheetName || "sheet").replace(/[^\w.-]+/g, "_") + "-markup.png", b));
+};
+// ---------- DAILY REPORT (one sheet; see Setup > Master export for the project-wide reports) ----------
+const hx = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const dayOf = iso => isoDay(new Date(iso));
+const dayStart = d => { const [y, m, dd] = d.split("-").map(Number); return new Date(y, m - 1, dd); };
+const dayEnd = d => { const [y, m, dd] = d.split("-").map(Number); return new Date(y, m - 1, dd + 1); };   // exclusive
+const dayDiff = (a, b) => Math.round((dayStart(b) - dayStart(a)) / 864e5);                                // b minus a, calendar days
+const shiftDay = (d, n) => { const [y, m, dd] = d.split("-").map(Number); return isoDay(new Date(y, m - 1, dd + n)); };
+const shortDay = d => dayStart(d).toLocaleDateString("en-US", {month: "short", day: "numeric"});
+const longDay = d => dayStart(d).toLocaleDateString("en-US", {weekday: "long", month: "long", day: "numeric", year: "numeric"});
+const fmtTime = iso => new Date(iso).toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit"});
+const nat = (a, b) => String(a).localeCompare(String(b), undefined, {numeric: true});
+const rp = x => Math.round(x);
+const sgn = n => (n > 0 ? "+" : n < 0 ? "\u2212" : "") + Math.abs(n);
+const uniq = a => a.filter((x, i) => a.indexOf(x) === i);
+// All report numbers come from here (pure: reads updates/targets/walks of the BOUND sheet, no DOM). Official = accepted updates only.
+// Updates are dated by when they were recorded; a status is whatever the latest update said as of the end of that day.
+function reportData(day, opts) {
+  const stall = Math.max(1, +((opts && opts.stallDays) || 3));
+  const S = dayStart(day), E = dayEnd(day);
+  const live = u => u.status !== "Note" && u.state !== "rejected";
+  const inDay = u => { const t = new Date(u.time); return t >= S && t < E; };
+  const byT = {};
+  updates.filter(u => u.targetId && live(u)).forEach(u => (byT[u.targetId] = byT[u.targetId] || []).push(u));
+  Object.keys(byT).forEach(k => byT[k].sort((a, b) => a.time.localeCompare(b.time)));
+  const latest = (t, end, official) => { let r = null; for (const u of byT[t.id] || []) { if (new Date(u.time) >= end) break; if (!official || u.state === "accepted") r = u; } return r; };
+  const inTargets = end => targets.filter(t => new Date(t.createdAt) < end && (!t.deleted || new Date(t.deletedAt || 0) >= end));
+  const snap = end => {
+    const o = {n: 0, off: 0, inc: 0, reviewed: 0, issues: 0, by: {}, items: []};
+    inTargets(end).forEach(t => {
+      const lo = latest(t, end, true), li = latest(t, end, false), po = lo ? PCT[lo.status] || 0 : 0, pi = li ? PCT[li.status] || 0 : 0;
+      const b = o.by[t.scope] = o.by[t.scope] || {n: 0, off: 0, inc: 0, reviewed: 0, issues: 0};
+      o.n++; b.n++; o.off += po; b.off += po; o.inc += pi; b.inc += pi;
+      if (li) { o.reviewed++; b.reviewed++; if (li.status === "Issue") { o.issues++; b.issues++; } }
+      o.items.push({t, lo, li});
+    });
+    o.offPct = o.n ? o.off / o.n : 0; o.incPct = o.n ? o.inc / o.n : 0;
+    Object.values(o.by).forEach(b => { b.offPct = b.n ? b.off / b.n : 0; b.incPct = b.n ? b.inc / b.n : 0; });
+    return o;
+  };
+  const events = (s, e) => {                       // issue raised / resolved between s and e (per planned item)
+    const opened = [], resolved = [];
+    inTargets(e).forEach(t => {
+      let prev = null, openU = null;
+      for (const u of byT[t.id] || []) {
+        const tm = new Date(u.time); if (tm >= e) break; const within = tm >= s;
+        if (u.status === "Issue" && prev !== "Issue") { openU = u; if (within) opened.push({t, u}); }
+        else if (u.status !== "Issue" && prev === "Issue") { if (within) resolved.push({t, u, openU}); openU = null; }
+        prev = u.status;
+      }
+    });
+    return {opened, resolved};
+  };
+  const loose = end => updates.filter(u => !u.targetId && u.status === "Issue" && u.state !== "rejected" && new Date(u.time) < end);
+  const dayStats = d => {
+    const s = dayStart(d), e = dayEnd(d), sn = snap(e), ev = events(s, e), lo = loose(e);
+    const ids = new Set(); updates.filter(u => u.targetId && live(u) && new Date(u.time) >= s && new Date(u.time) < e).forEach(u => ids.add(u.targetId));
+    return {day: d, sn, ev, loose: lo, opened: ev.opened.length + lo.filter(u => new Date(u.time) >= s).length, resolved: ev.resolved.length,
+      openNow: sn.issues + lo.length, touchedIds: ids, touched: ids.size, walksN: walks.filter(w => dayOf(w.startedAt) === d).length};
+  };
+  // previous walk days = days with any recorded (non-rejected) update or walk before the selected date
+  const dset = new Set(); updates.filter(u => u.state !== "rejected").forEach(u => dset.add(dayOf(u.time))); walks.forEach(w => dset.add(dayOf(w.startedAt)));
+  const before = [...dset].filter(d => d < day).sort();
+  const trend = before.slice(-9).concat([day]).map(dayStats);
+  const cur2 = trend[trend.length - 1], prev = before.length ? trend[trend.length - 2] : null;
+  const openIssues = [];
+  cur2.sn.items.forEach(({t, li}) => {
+    if (!li || li.status !== "Issue") return;
+    const run = []; for (const u of byT[t.id] || []) { if (new Date(u.time) >= E) break; if (u.status === "Issue") run.push(u); else run.length = 0; }
+    openIssues.push({label: t.label, scope: t.scope, note: uniq(run.map(u => u.note).filter(Boolean)).join(" / "), since: run[0].time,
+      age: dayDiff(dayOf(run[0].time), day), review: run.some(u => u.state === "pending")});
+  });
+  cur2.loose.forEach(u => openIssues.push({label: "Position only (" + u.scope + ")", scope: u.scope, note: u.note || "", since: u.time, age: dayDiff(dayOf(u.time), day), review: u.state === "pending"}));
+  openIssues.sort((a, b) => b.age - a.age || nat(a.label, b.label));
+  const resolvedToday = cur2.ev.resolved.map(r => ({label: r.t.label, scope: r.t.scope, raised: r.openU.time, resolved: r.u.time, days: dayDiff(dayOf(r.openU.time), dayOf(r.u.time)), to: r.u.status}));
+  const dueOf = t => { let d = null; for (const u of byT[t.id] || []) { if (new Date(u.time) >= E) break; if (u.due) d = u.due; } return d; };
+  const overdue = [], stalled = [];
+  cur2.sn.items.forEach(({t, li}) => {
+    const st = li ? li.status : null; if (st === "Complete") return;
+    const due = dueOf(t);
+    if (due && due < day) overdue.push({label: t.label, scope: t.scope, status: st || "Not reviewed", due, late: dayDiff(due, day), note: li ? li.note : ""});
+    else if (st === "In progress") { const idle = dayDiff(dayOf(li.time), day); if (idle >= stall) stalled.push({label: t.label, scope: t.scope, since: li.time, idle}); }
+  });
+  overdue.sort((a, b) => b.late - a.late || nat(a.label, b.label)); stalled.sort((a, b) => b.idle - a.idle || nat(a.label, b.label));
+  const changes = [];
+  cur2.sn.items.forEach(({t, li}) => {
+    if (!cur2.touchedIds.has(t.id)) return;
+    const b = latest(t, S, false), ups = updates.filter(u => u.targetId === t.id && u.state !== "rejected" && inDay(u)).sort((x, y) => x.time.localeCompare(y.time));
+    changes.push({label: t.label, scope: t.scope, from: b ? b.status : "Not reviewed", to: li ? li.status : "-", note: uniq(ups.map(u => u.note).filter(Boolean)).join(" / "), time: ups[ups.length - 1].time, review: ups.some(u => u.state === "pending")});
+  });
+  updates.filter(u => !u.targetId && u.state !== "rejected" && inDay(u)).forEach(u => changes.push({label: "Position only", scope: u.scope, from: "-", to: u.status, note: u.note || "", time: u.time, review: u.state === "pending"}));
+  changes.sort((a, b) => nat(a.scope, b.scope) || nat(a.label, b.label));
+  const todays = updates.filter(inDay), counted = todays.filter(u => u.status !== "Note");
+  const pend = updates.filter(u => u.state === "pending" && u.status !== "Note" && new Date(u.time) < E);
+  const walkRows = walks.filter(w => dayOf(w.startedAt) === day).map(w => {
+    const ups = updates.filter(u => u.walkId === w.id && u.state !== "rejected" && u.status !== "Note");
+    return {start: w.startedAt, end: w.finishedAt, mins: w.finishedAt ? Math.round((new Date(w.finishedAt) - new Date(w.startedAt)) / 60000) : null,
+      updates: ups.length, items: new Set(ups.filter(u => u.targetId).map(u => u.targetId)).size};
+  });
+  return {day, stall, cur: cur2, prev, trend, openIssues, resolvedToday, overdue, stalled, changes, walkRows, dayStats, events,
+    counts: {recorded: counted.length, accepted: counted.filter(u => u.state === "accepted").length, pending: counted.filter(u => u.state === "pending").length, rejected: todays.filter(u => u.state === "rejected").length},
+    pending: {count: pend.length, pts: rp(cur2.sn.incPct) - rp(cur2.sn.offPct)}, photos: photos.filter(p => dayOf(p.time) === day).length};
+}
+function reportSummary(R) {
+  const c = R.cur, p = R.prev, n = c.sn.n, L = [];
+  if (!n) return ["No planned items yet, so no progress can be calculated. Mark items on the Plan tab."];
+  const off = rp(c.sn.offPct);
+  L.push("Official progress is " + off + "% across " + n + " planned items" + (p ? " (" + sgn(off - rp(p.sn.offPct)) + " pts vs " + shortDay(p.day) + ")" : ", the first recorded day") + ", counting accepted updates only.");
+  L.push(c.touched ? c.touched + " of " + n + " planned items were reviewed on this date across " + c.walksN + " walk" + (c.walksN === 1 ? "" : "s") + "; " + c.sn.reviewed + " of " + n + " have been reviewed overall."
+    : "No planned items were reviewed on this date; " + c.sn.reviewed + " of " + n + " have been reviewed overall.");
+  if (R.openIssues.length) {
+    const o = R.openIssues[0];
+    L.push(R.openIssues.length + " open issue" + (R.openIssues.length === 1 ? "" : "s") + (c.sn.issues ? " holding " + c.sn.issues + " planned item" + (c.sn.issues === 1 ? "" : "s") + " at 0%" : "") + ". Oldest: " + o.label + (o.age ? ", open " + o.age + " day" + (o.age === 1 ? "" : "s") : ", raised on this date") + ".");
+  } else L.push("There are no open issues.");
+  if (c.opened || c.resolved) L.push((c.opened ? c.opened + " issue" + (c.opened === 1 ? "" : "s") + " raised" : "") + (c.opened && c.resolved ? " and " : "") + (c.resolved ? c.resolved + " resolved" : "") + " on this date.");
+  if (R.pending.count) L.push(R.pending.count + " update" + (R.pending.count === 1 ? "" : "s") + " awaiting review" + (R.pending.pts !== 0 ? "; accepting them would change progress to " + rp(c.sn.incPct) + "% (" + sgn(R.pending.pts) + " pts)." : "."));
+  if (R.overdue.length) L.push(R.overdue.length + " item" + (R.overdue.length === 1 ? " is" : "s are") + " past a due date stated in the field notes.");
+  if (R.stalled.length) L.push(R.stalled.length + " item" + (R.stalled.length === 1 ? " has" : "s have") + " been in progress with no update for " + R.stall + "+ days.");
+  return L;
+}
+// Marked-up page as of the end of the selected day. Status colours as of that day; black ring = updated that day; dashed = awaiting review.
+function reportMapURL(R) {
+  if (!sheetLoaded) return null;
+  const sf = Math.min(1, 1800 / ov.width), c = document.createElement("canvas");
+  c.width = Math.round(ov.width * sf); c.height = Math.round(ov.height * sf);
+  const g = c.getContext("2d"); g.drawImage(base, 0, 0, c.width, c.height); g.scale(sf, sf);
+  const r = Math.max(8, ov.width / 90), E = dayEnd(R.day), cur2 = R.cur;
+  walks.filter(w => dayOf(w.startedAt) === R.day).forEach(w => {
+    const tr = (w.trail || []).map(trailPx).filter(Boolean); if (tr.length < 2) return;
+    g.save(); g.globalAlpha = .6; g.strokeStyle = "#1d5fd1"; g.lineWidth = r / 3; g.beginPath(); tr.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke(); g.restore();
+  });
+  cur2.sn.items.forEach(({t, li}) => {
+    const col = li ? STATUS[li.status] || "#8a8f8c" : "#8a8f8c", touched = cur2.touchedIds.has(t.id), dashed = !!(li && li.state === "pending");
+    const path = () => { g.beginPath(); if (t.shape === "highlight") t.pts.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); else if (t.shape === "circle") g.arc(t.x, t.y, t.size / 2, 0, 7); else g.rect(t.x - t.size / 2, t.y - t.size / 2, t.size, t.size); };
+    g.save(); g.lineCap = "round"; g.lineJoin = "round";
+    if (touched) {                                                   // ring: white halo + black outline so it shows on any drawing
+      [["#fff", 10], ["#000", 5]].forEach(([k, w]) => { g.strokeStyle = k; g.lineWidth = (t.shape === "highlight" ? t.size : 0) + w + r / 2; path(); g.stroke(); });
+    }
+    g.fillStyle = col; g.strokeStyle = col; if (dashed) g.setLineDash([r * .6, r * .5]);
+    if (t.shape === "highlight") { g.globalAlpha = .55; g.lineWidth = t.size; path(); g.stroke(); }
+    else { g.globalAlpha = .6; path(); g.fill(); g.globalAlpha = 1; g.lineWidth = Math.max(2, r / 4); path(); g.stroke(); }
+    g.restore();
+    if (li && li.status === "Issue") {                               // name the open issues on the page
+      g.save(); g.font = "bold " + Math.round(r * 1.7) + "px system-ui, sans-serif"; g.lineWidth = 4; g.strokeStyle = "#fff"; g.fillStyle = "#a01818";
+      const lx = t.x + t.size * .6, ly = t.y - t.size * .6; g.strokeText(t.label, lx, ly); g.fillText(t.label, lx, ly); g.restore();
+    }
+  });
+  cur2.loose.concat(updates.filter(u => !u.targetId && u.status !== "Issue" && u.status !== "Note" && u.state !== "rejected" && u.x != null && new Date(u.time) < E)).forEach(u => {
+    if (u.x == null) return; g.beginPath(); g.arc(u.x, u.y, r, 0, 7); g.fillStyle = STATUS[u.status] || "#888"; g.fill(); g.lineWidth = 2; g.strokeStyle = "#fff"; g.stroke();
+  });
+  return c.toDataURL("image/jpeg", .85);
+}
+const raw = h => ({raw: h}), cellH = v => (v && typeof v === "object" && "raw" in v) ? v.raw : hx(v);
+const tableH = (heads, rows, empty) => rows.length
+  ? "<table><thead><tr>" + heads.map(h => "<th>" + hx(h) + "</th>").join("") + "</tr></thead><tbody>" + rows.map(r => "<tr>" + r.map(v => "<td>" + cellH(v) + "</td>").join("") + "</tr>").join("") + "</tbody></table>"
+  : '<p class="muted">' + hx(empty) + "</p>";
+const badgeH = st => raw('<span class="b" style="background:' + (STATUS[st] || "#8a8f8c") + (st === "In progress" ? ";color:#111" : "") + '">' + hx(st) + "</span>");
+function trendSVG(rows, curDay) {
+  const W = 640, H = 172, pad = 30, n = rows.length, step = (W - pad - 10) / n, bw = Math.min(56, step * .6), base2 = H - 30, top = 20, ph = base2 - top;
+  let s = '<svg viewBox="0 0 ' + W + " " + H + '" width="100%" role="img" aria-label="Official progress by walk day">';
+  [0, 50, 100].forEach(v => { const y = base2 - ph * v / 100; s += '<line x1="' + pad + '" x2="' + (W - 6) + '" y1="' + y + '" y2="' + y + '" stroke="#dfe4e1"/><text x="' + (pad - 4) + '" y="' + (y + 4) + '" font-size="10" text-anchor="end" fill="#667">' + v + "%</text>"; });
+  rows.forEach((r, i) => {
+    const x = pad + step * i + (step - bw) / 2, ho = ph * r.sn.offPct / 100, hi = ph * r.sn.incPct / 100;
+    s += '<rect x="' + x + '" y="' + (base2 - hi) + '" width="' + bw + '" height="' + hi + '" fill="#1f6f5c" opacity=".22"/>';
+    s += '<rect x="' + x + '" y="' + (base2 - ho) + '" width="' + bw + '" height="' + ho + '" fill="' + (r.day === curDay ? "#1f6f5c" : "#86b8aa") + '"/>';
+    s += '<text x="' + (x + bw / 2) + '" y="' + (base2 - Math.max(ho, hi) - 5) + '" font-size="11" font-weight="700" text-anchor="middle">' + rp(r.sn.offPct) + "%</text>";
+    s += '<text x="' + (x + bw / 2) + '" y="' + (base2 + 13) + '" font-size="10" text-anchor="middle" fill="#445">' + hx(shortDay(r.day)) + "</text>";
+    if (r.openNow) s += '<text x="' + (x + bw / 2) + '" y="' + (base2 + 25) + '" font-size="10" text-anchor="middle" fill="#b3261e">' + r.openNow + " issue" + (r.openNow > 1 ? "s" : "") + "</text>";
+  });
+  return s + "</svg>";
+}
+const RPT_CSS = "*{box-sizing:border-box}body{font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;color:#1b1f1d;margin:0;padding:20px;background:#fff;max-width:960px;margin:0 auto}"
+  + "h1{font-size:22px;margin:0}h2{font-size:16px;margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid #1f6f5c;break-after:avoid}h3{font-size:14px;margin:14px 0 6px}"
+  + ".muted{color:#5b6560;font-size:12.5px;margin:4px 0}.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}"
+  + ".pill{display:inline-block;padding:4px 10px;border-radius:999px;font-weight:700;font-size:12.5px;color:#fff}"
+  + ".kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}.kpi{border:1px solid #d5dbd8;border-radius:8px;padding:10px;break-inside:avoid}"
+  + ".kpi b{display:block;font-size:26px;line-height:1.1}.kpi span{font-size:12px;color:#5b6560}.up{color:#1f7a45}.down{color:#b3261e}"
+  + "ul.sum{margin:8px 0;padding-left:20px}ul.sum li{margin:3px 0}table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0}"
+  + "th,td{border-bottom:1px solid #e1e5e3;padding:5px 6px;text-align:left;vertical-align:top}th{background:#f1f4f2;font-size:12px}tr{break-inside:avoid}"
+  + ".b{display:inline-block;padding:1px 8px;border-radius:999px;color:#fff;font-size:11.5px;font-weight:700;white-space:nowrap}"
+  + ".note{border-left:4px solid #1f6f5c;background:#f1f6f4;padding:8px 10px;margin:10px 0;white-space:pre-wrap}.map{width:100%;border:1px solid #cfd6d2;display:block}"
+  + ".leg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:6px 0}.leg i{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:4px;border-radius:2px}"
+  + ".pbar{height:10px;background:#e6ebe8;border-radius:5px;min-width:80px;overflow:hidden}.pbar i{display:block;height:100%;background:#1f6f5c}"
+  + ".pg{break-before:page}"
+  + "@media print{body{padding:0;max-width:none}.noprint{display:none}@page{margin:12mm}}";
+function reportHTML(R, mapUrl, notes) {
+  const c = R.cur, p = R.prev, n = c.sn.n, off = rp(c.sn.offPct), inc = rp(c.sn.incPct), dOff = p ? off - rp(p.sn.offPct) : null;
+  const css = RPT_CSS;
+  const ageTxt = a => a <= 0 ? "today" : a + " day" + (a === 1 ? "" : "s");
+  const lastWalkNote = R.walkRows.some(w => !w.end) ? '<p class="muted">A walk with no finish time was left open.</p>' : "";
+  const scopes = Object.keys(c.sn.by).sort(nat);
+  const scopeRows = scopes.map(sc => { const b = c.sn.by[sc], pb = p && p.sn.by[sc], o = rp(b.offPct), po = pb ? rp(pb.offPct) : null;
+    return [sc, b.n, b.reviewed + " of " + b.n, po == null ? "-" : po + "%", o + "%", po == null ? "-" : sgn(o - po) + " pts", b.issues || "0"]; });
+  const trendRows = R.trend.slice().reverse().map((r, i, a) => { const pr = a[i + 1]; return [shortDay(r.day) + (r.day === R.day ? " (this report)" : ""), r.walksN, r.touched, r.sn.n, rp(r.sn.offPct) + "%", pr ? sgn(rp(r.sn.offPct) - rp(pr.sn.offPct)) + " pts" : "-", r.opened + " / " + r.resolved, r.openNow]; });
+  const body = [
+    '<div class="top"><div><h1>Daily Walkdown Report</h1><div class="muted">' + hx(longDay(R.day)) + (projLabel() ? " &middot; " + hx(projLabel()) : "") + (sheetName ? " &middot; Sheet: " + hx(sheetName) : "") + '</div></div>'
+      + '<span class="pill" style="background:' + (R.openIssues.length ? "#b3261e" : "#1f7a45") + '">' + (R.openIssues.length ? R.openIssues.length + " open issue" + (R.openIssues.length === 1 ? "" : "s") : "No open issues") + "</span></div>",
+    '<div class="kpis">'
+      + '<div class="kpi"><b>' + off + '%</b><span>Official progress' + (dOff == null ? " (first day)" : ' <em class="' + (dOff >= 0 ? "up" : "down") + '">' + sgn(dOff) + " pts vs " + hx(shortDay(p.day)) + "</em>") + "</span></div>"
+      + '<div class="kpi"><b>' + c.touched + " / " + n + "</b><span>Items reviewed this date</span><br><span>" + c.sn.reviewed + " of " + n + " reviewed overall</span></div>"
+      + '<div class="kpi"><b>' + R.openIssues.length + '</b><span>Open issues</span><br><span>' + c.opened + " raised, " + c.resolved + " resolved this date</span></div>"
+      + '<div class="kpi"><b>' + R.pending.count + '</b><span>Updates awaiting review</span><br><span>' + (R.pending.pts !== 0 ? "Progress would be " + inc + "% (" + sgn(R.pending.pts) + " pts) if accepted" : "No effect on progress") + "</span></div></div>",
+    '<h2>Overview</h2><ul class="sum">' + reportSummary(R).map(x => "<li>" + hx(x) + "</li>").join("") + "</ul>",
+    notes && notes.trim() ? '<div class="note"><b>Notes from the field</b><br>' + hx(notes.trim()) + "</div>" : "",
+    "<h2>Sheet as of end of day</h2>" + (mapUrl ? '<img class="map" alt="Marked-up sheet" src="' + mapUrl + '">'
+      + '<div class="leg">' + ["Complete", "In progress", "Issue"].map(k => '<span><i style="background:' + STATUS[k] + '"></i>' + k + "</span>").join("")
+      + '<span><i style="background:#8a8f8c"></i>Not started / not reviewed</span><span><i style="border:2px solid #000;background:#fff"></i>Updated this date</span><span>Dashed outline = awaiting review</span><span><i style="background:#1d5fd1"></i>Walk path</span></div>'
+      : '<p class="muted">The drawing for this sheet is not stored on this device, so the marked-up page is not included.</p>'),
+    "<h2>Progress by category</h2>" + tableH(["Category", "Items", "Reviewed", p ? "Prev. " + shortDay(p.day) : "Prev.", "Now", "Change", "Open issues"], scopeRows, "No planned items."),
+    "<h2>Compared with previous walk days</h2>" + (R.trend.length > 1 ? trendSVG(R.trend, R.day) + '<div class="muted">Dark bar = official (accepted); light bar behind = including updates awaiting review.</div>' : "")
+      + tableH(["Day", "Walks", "Items reviewed", "Planned items", "Official progress", "Change", "Issues raised / resolved", "Open issues (end of day)"], trendRows, "No walk history yet.")
+      + (R.trend.length === 1 ? '<p class="muted">This is the first recorded walk day, so there is nothing earlier to compare with.</p>' : ""),
+    "<h2>Issues and potential delay drivers</h2><p class=\"muted\">Items below are the recorded reasons progress may be held up. This report has no schedule baseline, so it shows age and stated due dates rather than days behind plan.</p>",
+    "<h3>Open issues (" + R.openIssues.length + ")</h3>" + tableH(["Item", "Category", "Issue", "Raised", "Open for", "Review"], R.openIssues.map(o => [o.label, o.scope, o.note || "(no note)", shortDay(dayOf(o.since)), ageTxt(o.age), o.review ? "Awaiting review" : "Accepted"]), "No open issues."),
+    "<h3>Issues resolved this date (" + R.resolvedToday.length + ")</h3>" + tableH(["Item", "Category", "Raised", "Resolved", "Time to resolve", "Now"], R.resolvedToday.map(r => [r.label, r.scope, shortDay(dayOf(r.raised)), fmtTime(r.resolved), ageTxt(r.days), badgeH(r.to)]), "None."),
+    "<h3>Past a stated due date (" + R.overdue.length + ")</h3>" + tableH(["Item", "Category", "Status", "Due", "Days late", "Note"], R.overdue.map(o => [o.label, o.scope, badgeH(o.status === "Not reviewed" ? "Not started" : o.status), shortDay(o.due), o.late, o.note || ""]), "None."),
+    "<h3>In progress with no update for " + R.stall + "+ days (" + R.stalled.length + ")</h3>" + tableH(["Item", "Category", "Last update", "Days idle"], R.stalled.map(o => [o.label, o.scope, shortDay(dayOf(o.since)), o.idle]), "None."),
+    "<h3>Review backlog</h3><p class=\"muted\">" + (R.pending.count ? R.pending.count + " update" + (R.pending.count === 1 ? " is" : "s are") + " not yet accepted and not counted in official progress." : "All recorded updates have been reviewed.") + " On this date: " + R.counts.recorded + " recorded, " + R.counts.accepted + " accepted, " + R.counts.pending + " awaiting review, " + R.counts.rejected + " rejected" + (R.photos ? ", " + R.photos + " photo" + (R.photos === 1 ? "" : "s") + " taken" : "") + ".</p>",
+    "<h3>Walks this date (" + R.walkRows.length + ")</h3>" + tableH(["Started", "Finished", "Duration", "Items reviewed", "Updates"], R.walkRows.map(w => [fmtTime(w.start), w.end ? fmtTime(w.end) : "Not finished", w.mins == null ? "-" : (w.mins >= 60 ? Math.floor(w.mins / 60) + " h " : "") + (w.mins % 60) + " min", w.items, w.updates]), "No walks were started on this date.") + lastWalkNote,
+    "<h2>Updates this date (" + R.changes.length + ")</h2>" + tableH(["Item", "Category", "Was", "Now", "Note", "Time", "Review"], R.changes.map(x => [x.label, x.scope, x.from === "Not reviewed" || x.from === "-" ? x.from : badgeH(x.from), x.to === "-" ? "-" : badgeH(x.to), x.note, fmtTime(x.time), x.review ? "Awaiting review" : "Accepted"]), "No updates were recorded on this date."),
+    '<h2>How to read this report</h2><p class="muted">Progress is the share of planned items, weighted Not started 0%, In progress ' + PCT["In progress"] + '%, Complete 100%, and Issue 0% until a later update resolves it. Official progress counts accepted updates only. Statuses are the latest update as of the end of each day, using the review status at the time this report was generated. Due dates come from field notes (for example "tomorrow"). Generated ' + hx(new Date().toLocaleString()) + ".</p>"
+  ].join("\n");
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Daily Walkdown Report ' + hx(R.day) + "</title><style>" + css + "</style></head><body>" + body + "</body></html>";
+}
+// ---- report UI ----
+function initReportBox() {
+  if ($("rptDate").value) return;
+  const today = isoDay(new Date()), any = updates.filter(u => u.state !== "rejected").map(u => dayOf(u.time)).sort();
+  $("rptDate").value = any.includes(today) || !any.length ? today : any[any.length - 1];
+}
+function buildReport() {
+  const day = $("rptDate").value, msg = $("rptMsg");
+  if (!day) { msg.textContent = "Pick a date first."; return null; }
+  const R = reportData(day, {stallDays: parseInt($("rptStall").value, 10) || 3});
+  const map = reportMapURL(R);
+  msg.textContent = (map ? "" : "The drawing is not loaded, so the marked-up page is left out. ") + (R.cur.sn.n ? "" : "No planned items yet. ") + (R.changes.length ? "" : "No updates were recorded on " + day + ".");
+  return {R, html: reportHTML(R, map, $("rptNotes").value), fname: "walkdown-" + (sheetName || "sheet").replace(/[^\w.-]+/g, "_") + "-daily-report-" + day + ".html"};
+}
+let lastReport = null;
+$("rptPrev").onclick = () => {
+  const r = buildReport(); if (!r) return; lastReport = r;
+  $("rptFrame").srcdoc = r.html; $("rptView").hidden = false;
+};
+$("rptDl").onclick = () => { const r = buildReport(); if (r) dl(r.fname, new Blob([r.html], {type: "text/html"})); };
+$("rptSave").onclick = () => { if (lastReport) dl(lastReport.fname, new Blob([lastReport.html], {type: "text/html"})); };
+$("rptClose").onclick = () => { $("rptView").hidden = true; $("rptFrame").srcdoc = ""; };
+$("rptPrint").onclick = () => { try { $("rptFrame").contentWindow.focus(); $("rptFrame").contentWindow.print(); } catch (e) { alert("Printing is blocked here. Use Download, then open the file and print it."); } };
+// ---------- DRAW OVERLAY ----------
+function dot(x, y, r, color, hollow) {
+  ox.beginPath(); ox.arc(x, y, r, 0, 7); ox.lineWidth = r / 3; ox.strokeStyle = color; ox.fillStyle = color;
+  hollow ? ox.stroke() : ox.fill();
+}
+function shapePath(t) {
+  ox.beginPath();
+  if (t.shape === "highlight") t.pts.forEach((q, i) => i ? ox.lineTo(q[0], q[1]) : ox.moveTo(q[0], q[1]));
+  else if (t.shape === "circle") ox.arc(t.x, t.y, t.size / 2, 0, 7);
+  else ox.rect(t.x - t.size / 2, t.y - t.size / 2, t.size, t.size);
+}
+function drawTrail(r) {
+  const tr = currentWalk ? currentWalk.trail : null; if (!tr || tr.length < 2) return;
+  const pts = tr.map(trailPx).filter(Boolean); if (pts.length < 2) return;
+  ox.save(); ox.beginPath(); pts.forEach((p, i) => i ? ox.lineTo(p[0], p[1]) : ox.moveTo(p[0], p[1]));
+  ox.strokeStyle = "#1d5fd1"; ox.lineWidth = r / 3; ox.lineJoin = "round"; ox.stroke(); ox.restore();
+}
+function drawTargets(r) {
+  const planning = mode === "plan";
+  liveTargets().forEach(t => {
+    let col, dashed = false, ghost = false;
+    if (planning) col = PLAN_COLOR;
+    else if (mode === "review") {                                      // colours follow the Review filters; the rest is dimmed
+      const m = reviewMatch(t);
+      if (m) { col = STATUS[m.status] || "#8a8f8c"; dashed = filt.state === "pending"; } else { col = "#8a8f8c"; ghost = true; }
+    } else {
+      const so = itemStatus(t, true), si = itemStatus(t, false);
+      col = si ? STATUS[si] : "#8a8f8c"; dashed = !!(si && so !== si);   // dashed = not official yet
+    }
+    if (planning && t.id === selId) {                                  // selected item: white halo so it stands out
+      ox.save(); ox.strokeStyle = "#fff"; ox.lineCap = "round"; ox.lineJoin = "round"; ox.globalAlpha = .95;
+      ox.lineWidth = t.shape === "highlight" ? t.size + r : Math.max(6, r * .8); shapePath(t); ox.stroke(); ox.restore();
+    }
+    ox.save(); ox.fillStyle = col; ox.strokeStyle = col; ox.lineCap = "round"; ox.lineJoin = "round";
+    if (dashed) ox.setLineDash([r * .6, r * .5]);
+    if (t.shape === "highlight") {
+      ox.globalAlpha = ghost ? .12 : .4; ox.lineWidth = t.size; shapePath(t); ox.stroke();
+    } else {
+      ox.globalAlpha = ghost ? .06 : .5; shapePath(t);
+      ox.fill(); ox.globalAlpha = ghost ? .3 : 1; ox.lineWidth = ghost ? 1.5 : Math.max(2, r / 4); ox.stroke();
+    }
+    ox.restore();
+    if (planning && t.id === selId && t.shape !== "highlight") {        // corner handle: drag to resize
+      const h = handlePos(t), hr = Math.max(r * .8, cssPx(8)); ox.save(); ox.beginPath(); ox.arc(h[0], h[1], hr, 0, 7); ox.fillStyle = "#fff"; ox.fill();
+      ox.lineWidth = Math.max(2, cssPx(2)); ox.strokeStyle = PLAN_COLOR; ox.stroke(); ox.restore();
+    }
+    const np = planning || ghost ? 0 : itemPhotos(t).length;            // camera badge on items that have photos
+    if (np) {
+      const b = t.shape === "highlight" ? anchorPt(t) : [t.x + t.size / 2, t.y - t.size / 2];
+      ox.save(); ox.font = Math.round(r * 1.5) + "px system-ui, sans-serif"; ox.textBaseline = "middle"; ox.textAlign = "center";
+      ox.beginPath(); ox.arc(b[0], b[1], r * 1.05, 0, 7); ox.fillStyle = "#fff"; ox.fill(); ox.lineWidth = 2; ox.strokeStyle = "#111"; ox.stroke();
+      ox.fillStyle = "#111"; ox.fillText("\u{1F4F7}", b[0], b[1] + 1);
+      if (np > 1) { ox.font = "bold " + Math.round(r * 1.1) + "px system-ui, sans-serif"; ox.fillStyle = "#d64545"; ox.fillText(String(np), b[0] + r * 1.5, b[1] - r * .6); }
+      ox.restore();
+    }
+  });
+  if (planning && hlDraft.length) {
+    ox.save(); ox.strokeStyle = PLAN_COLOR; ox.globalAlpha = .5; ox.lineCap = "round"; ox.lineWidth = planSize() * .8;
+    ox.beginPath(); hlDraft.forEach((q, i) => i ? ox.lineTo(q[0], q[1]) : ox.moveTo(q[0], q[1])); ox.stroke(); ox.restore();
+    hlDraft.forEach(q => dot(q[0], q[1], r * .6, PLAN_COLOR, false));
+  }
+  if (!planning && near && walking) {                                  // ring on the item the next remark will attach to
+    const t = near.t; ox.save(); ox.strokeStyle = "#fff"; ox.lineWidth = Math.max(3, r / 3); ox.setLineDash([]);
+    ox.beginPath(); if (t.shape === "highlight") { ox.arc(near.pt[0], near.pt[1], t.size, 0, 7); } else ox.arc(t.x, t.y, t.size * .75, 0, 7);
+    ox.stroke(); ox.restore();
+  }
+}
+function draw() {
+  ox.clearRect(0, 0, ov.width, ov.height);
+  const r = Math.max(8, ov.width / 90);
+  drawTrail(r);
+  anchors.forEach((a, i) => { dot(a.px, a.py, r, "#1d5fd1", true); ox.fillStyle = "#1d5fd1"; ox.font = `bold ${r * 1.6}px system-ui`; ox.fillText(i + 1, a.px + r * 1.2, a.py - r * 1.2); });
+  if (pending) dot(pending[0], pending[1], r, "#ff00aa", true);
+  drawTargets(r);
+  updates.forEach(u => { if (u.x != null && !u.targetId && (mode === "review" ? reviewShowsLoose(u) : u.state !== "rejected")) dot(u.x, u.y, r * 1.2, STATUS[u.status], u.state === "pending"); });
+  photos.forEach(ph => { if (ph.x != null && !ph.targetId) { ox.fillStyle = "#111"; ox.font = `${r * 2}px system-ui`; ox.fillText("\u{1F4F7}", ph.x - r, ph.y + r); } });
+  renderProgress();
+  const p = curPx(); if (p && (walking || (gpsOn && pos && T))) { dot(p[0], p[1], r * 1.4, "#1d5fd1"); dot(p[0], p[1], r * .5, "#fff"); }
+}
+// ---------- STORAGE (IndexedDB: projects, sheets, drawings, photos) ----------
+// Small JSON records live in "projects" and "sheets"; drawings are Blobs in "images"; photo pixels are in "photos".
+const DB_NAME = "walkdown-db", DB_VER = 2, OLD_KEY = "walkdown-beta-v2", MIGRATED_KEY = "walkdown-v8-migrated";
+const OLD_DEFAULT_SCOPES = ["Columns", "Footings", "Concrete", "Rebar", "Formwork", "Structural steel", "Other"];   // built-in before v7
+let idb = null, idbOk = false;
+const dirty = new Set(), projDirty = new Set();
+let flushTimer = null, flushDue = 0, flushing = Promise.resolve(), saveWarned = false;
+let dbBlocked = false;
+function idbOpen() {
+  return new Promise(res => {
+    let done = false; const fin = v => { if (!done) { done = true; res(v); } };
+    try {
+      const r = indexedDB.open(DB_NAME, DB_VER);
+      r.onupgradeneeded = () => { const d = r.result; ["kv", "sheets", "images", "photos", "projects"].forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s); }); };
+      r.onsuccess = () => { const d = r.result; d.onversionchange = () => d.close(); if (done) d.close(); else fin(d); };   // late success after we gave up: release it
+      r.onerror = () => fin(null);
+      r.onblocked = () => { dbBlocked = true; setTimeout(() => fin(null), 4000); };   // an older Walkdown tab still holds the database: give it a few seconds to let go
+    } catch (e) { fin(null); }
+  });
+}
+const idbReq = (store, mode2, fn) => new Promise((res, rej) => {
+  try {
+    const tx = idb.transaction(store, mode2), r = fn(tx.objectStore(store));
+    tx.oncomplete = () => res(r ? r.result : undefined);
+    tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error || new Error("aborted"));
+  } catch (e) { rej(e); }
+});
+const idbGet = (s, k) => idbReq(s, "readonly", st => st.get(k));
+const idbPut = (s, k, v) => idbReq(s, "readwrite", st => st.put(v, k));
+const idbDel = (s, k) => idbReq(s, "readwrite", st => st.delete(k));
+const idbKeys = s => idbReq(s, "readonly", st => st.getAllKeys());
+const idbClear = s => idbReq(s, "readwrite", st => st.clear());
+const stripPhotoData = (k, v) => k === "dataUrl" ? undefined : v;        // photo pixels are stored separately, not in the sheet record
+function onSaveError(e) {
+  console.warn("Save failed", e);
+  if (!saveWarned) { saveWarned = true; alert("This browser could not save your latest changes (storage may be full). Export what you need, then free space by archiving or deleting old sheets."); }
+}
+// ---- projects ----
+const newProject = (name, number, location, extra) => ({id: newId("proj"), name, number: number || "", location: location || "", createdAt: new Date().toISOString(),
+  archived: false, KW: DEFAULT_KW.map(k => ({...k})), SCOPES: [], catMode: {}, pct: 50, ...extra});
+const normProject = p => ({number: "", location: "", archived: false, catMode: {}, pct: 50, ...p,
+  KW: Array.isArray(p.KW) && p.KW.length ? p.KW.map(k => ({scope: "All", ...k})) : DEFAULT_KW.map(k => ({...k})),
+  SCOPES: Array.isArray(p.SCOPES) ? p.SCOPES : [], catMode: p.catMode && typeof p.catMode === "object" ? p.catMode : {}});
+// Copies the working values (keywords, categories, name...) of the open project back into its record.
+function syncProj() {
+  if (!curProj) return;
+  curProj.KW = KW; curProj.SCOPES = SCOPES; curProj.catMode = CATMODE; curProj.pct = PCT["In progress"];
+  curProj.name = projectName; curProj.number = projectNumber; curProj.location = projectLoc;
+}
+function schedule(delay) {
+  const due = Date.now() + delay;
+  if (flushTimer && flushDue <= due) return;                              // an earlier save is already queued
+  clearTimeout(flushTimer); flushDue = due; flushTimer = setTimeout(flushNow, delay);
+}
+// Marks the open sheet and the open project as changed; written to storage a moment later.
+function saveState(delay) { if (cur) dirty.add(cur.id); if (curProj) projDirty.add(curProj.id); schedule(delay == null ? 250 : delay); }
+function saveSoon() { saveState(4000); }                                  // used for GPS trail points
+function saveSheet(sh) { dirty.add(sh.id); schedule(250); }
+function saveProject(p) { projDirty.add(p.id); schedule(250); }
+function flushNow() {
+  clearTimeout(flushTimer); flushTimer = null; flushDue = 0;
+  if (!idbOk) return flushing;
+  syncProj();
+  const ids = [...dirty], pids = [...projDirty]; dirty.clear(); projDirty.clear();
+  flushing = flushing.then(async () => {
+    try {
+      for (const id of ids) { const sh = allSheets.find(s => s.id === id); if (sh) await idbPut("sheets", id, JSON.stringify(sh, stripPhotoData)); }
+      for (const id of pids) { const p = projects.find(x => x.id === id); if (p) await idbPut("projects", id, JSON.stringify(p)); }
+      saveWarned = false;
+    } catch (e) { ids.forEach(id => dirty.add(id)); pids.forEach(id => projDirty.add(id)); onSaveError(e); }
+  });
+  return flushing;
+}
+function putPhoto(ph) { if (idbOk && ph.dataUrl) idbPut("photos", ph.id, ph.dataUrl).catch(onSaveError); }
+document.addEventListener("visibilitychange", () => { if (document.hidden) flushNow(); });
+window.addEventListener("pagehide", () => { flushNow(); });
+// ---- sheets ----
+const newSheet = (name, extra) => ({id: newId("sheet"), projectId: null, name, addedAt: new Date().toISOString(), archived: false, hasImage: false,
+  imgW: null, imgH: null, thumb: null, srcName: "", page: null, anchors: [], targets: [], updates: [], walks: [], voiceLogs: [], photos: [], ...extra});
+const normSheet = s => ({projectId: null, archived: false, hasImage: false, imgW: null, imgH: null, thumb: null, srcName: "", page: null, ...s,
+  anchors: s.anchors || [], targets: s.targets || [], walks: s.walks || [], voiceLogs: s.voiceLogs || [], photos: s.photos || [],
+  updates: (s.updates || []).filter(u => (u.text || "").trim() || (u.note || "").trim())});
+const activeSheets = () => sheets.filter(s => !s.archived);
+// Runs fn with the global data arrays temporarily pointing at another sheet (used for stats and exports; synchronous only).
+function withSheet(sh, fn) {
+  const sv = [targets, updates, walks, voiceLogs, photos];
+  targets = sh.targets; updates = sh.updates; walks = sh.walks; voiceLogs = sh.voiceLogs; photos = sh.photos;
+  try { return fn(); } finally { targets = sv[0]; updates = sv[1]; walks = sv[2]; voiceLogs = sv[3]; photos = sv[4]; }
+}
+async function loadPhotoData(sh) {
+  if (!idbOk) return;
+  await Promise.all(sh.photos.filter(p => !p.dataUrl).map(async p => { try { p.dataUrl = await idbGet("photos", p.id); } catch (e) {} }));
+}
+async function loadAll() {
+  for (const k of await idbKeys("projects")) { try { projects.push(normProject(JSON.parse(await idbGet("projects", k)))); } catch (e) { console.warn("Unreadable project record", k, e); } }
+  for (const k of await idbKeys("sheets")) { try { allSheets.push(normSheet(JSON.parse(await idbGet("sheets", k)))); } catch (e) { console.warn("Unreadable sheet record", k, e); } }
+  allSheets.sort((a, b) => (a.addedAt || "").localeCompare(b.addedAt || ""));
+  projects.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+  await migrateAll();
+}
+// Brings older data into the project model. v8 had ONE project (settings in kv/"project") and sheets without a projectId.
+async function migrateAll() {
+  const orphans = allSheets.filter(s => !s.projectId || !projects.some(p => p.id === s.projectId));
+  if (!projects.length) {
+    let legacy = null; try { legacy = JSON.parse((await idbGet("kv", "project")) || "null"); } catch (e) {}
+    if (legacy || orphans.length) {
+      const p = newProject((legacy && legacy.name) || "My project", "", "", {});
+      if (legacy) {
+        if (Array.isArray(legacy.KW) && legacy.KW.length) p.KW = legacy.KW.map(k => ({scope: "All", ...k}));
+        if (Array.isArray(legacy.SCOPES)) p.SCOPES = legacy.SCOPES.slice();
+        if (typeof legacy.pct === "number") p.pct = legacy.pct;
+        p.KW.filter(k => k.scope && k.scope !== "All").forEach(k => { p.catMode[k.scope] = "custom"; });   // a category with its own keywords uses them instead of the global ones
+      }
+      projects.push(p); projDirty.add(p.id);
+      orphans.forEach(s => { s.projectId = p.id; dirty.add(s.id); });
+      await flushNow(); return;
+    }
+    await migrateV7(); return;
+  }
+  if (orphans.length) { orphans.forEach(s => { s.projectId = projects[0].id; dirty.add(s.id); }); await flushNow(); }
+}
+// One-time: bring over data saved by v2-v7 (one sheet, kept in localStorage). The drawing was never stored, so it must be re-attached.
+async function migrateV7() {
+  try { if (localStorage.getItem(MIGRATED_KEY)) return; } catch (e) { return; }
+  let d = null; try { d = JSON.parse(localStorage.getItem(OLD_KEY) || "null"); } catch (e) {}
+  if (!d) return;
+  let kw = DEFAULT_KW.map(k => ({...k})), sc = [], pct = 50;
+  if (Array.isArray(d.KW) && d.KW.length) kw = d.KW.map(k => ({scope: "All", ...k}));
+  if (Array.isArray(d.SCOPES)) {
+    sc = d.SCOPES.slice();
+    if ((d.v || 0) < 7) { const used = new Set((d.targets || []).map(t => t.scope).concat((d.updates || []).map(u => u.scope), kw.map(k => k.scope))); sc = sc.filter(s => !OLD_DEFAULT_SCOPES.includes(s) || used.has(s)); }
+  }
+  if (typeof d.pct === "number") pct = d.pct;
+  const has = (d.targets || []).length || (d.updates || []).length || (d.walks || []).length || (d.photos || []).length;
+  if (has) {
+    const p = newProject("Project from earlier version", "", "", {KW: kw, SCOPES: sc, pct});
+    kw.filter(k => k.scope && k.scope !== "All").forEach(k => { p.catMode[k.scope] = "custom"; });
+    const sh = normSheet(newSheet((d.sheet || "Sheet from earlier version").replace(/\.[^.]+$/, ""), {projectId: p.id, srcName: d.sheet || "", migrated: true,
+      targets: d.targets || [], updates: d.updates || [], walks: d.walks || [], voiceLogs: d.voiceLogs || [], photos: d.photos || []}));
+    for (const ph of sh.photos) if (ph.dataUrl) await idbPut("photos", ph.id, ph.dataUrl).catch(() => {});
+    projects.push(p); allSheets.push(sh); projDirty.add(p.id); dirty.add(sh.id);
+  }
+  try { localStorage.setItem(MIGRATED_KEY, "1"); } catch (e) {}      // the old localStorage copy is left untouched as a backup
+  await flushNow();
+}
+async function eraseEverything() {
+  if (idbOk) for (const s of ["kv", "sheets", "images", "photos", "projects"]) { try { await idbClear(s); } catch (e) {} }
+  projects = []; allSheets = []; sheets = []; cur = null; curProj = null; dirty.clear(); projDirty.clear();
+  KW = DEFAULT_KW.map(k => ({...k})); SCOPES = []; CATMODE = {}; projectName = projectNumber = projectLoc = ""; PCT["In progress"] = 50;
+  try { localStorage.setItem(MIGRATED_KEY, "1"); } catch (e) {}
+}
+// ---- image helpers ----
+const loadImg = src => new Promise((res, rej) => {
+  const isBlob = typeof src !== "string", u = isBlob ? URL.createObjectURL(src) : src, im = new Image();
+  im.onload = () => { if (isBlob) URL.revokeObjectURL(u); res(im); };
+  im.onerror = () => { if (isBlob) URL.revokeObjectURL(u); rej(new Error("unreadable image")); };
+  im.src = u;
+});
+const canvasBlob = (c, type, q) => new Promise(res => c.toBlob(res, type, q));
+function makeThumb(src, w, h) {
+  const k = Math.min(1, 360 / w), c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.72);
+}
+// ---------- PROJECTS PAGE, SHEETS TAB, OPEN / LEAVE ----------
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const fmtDay = iso => new Date(iso).toLocaleDateString("en-US", {month: "short", day: "numeric"});
+const thumbCache = new Map();
+let importing = false, sheetEpoch = 0;     // sheetEpoch changes every time a sheet is opened or left
+function sheetStats(sh) {
+  return withSheet(sh, () => {
+    const g = progress(), n = g.n;
+    const loose = updates.filter(u => !u.targetId && u.status === "Issue" && u.state !== "rejected").length;
+    const pend = updates.filter(u => u.state === "pending" && u.status !== "Note").length;
+    let last = null;
+    walks.forEach(w => { if (!last || w.startedAt > last) last = w.startedAt; });
+    if (!last) updates.forEach(u => { if (u.state !== "rejected" && (!last || u.time > last)) last = u.time; });
+    return {n, offPts: g.off, incPts: g.inc, off: n ? g.off / n : 0, inc: n ? g.inc / n : 0, reviewed: g.reviewed, issues: g.issues + loose, pend, last, by: g.by};
+  });
+}
+// Totals for a project (uses that project's own "In progress" weight, not the open project's).
+function projStats(p) {
+  const shs = allSheets.filter(s => s.projectId === p.id && !s.archived), sv = PCT["In progress"]; PCT["In progress"] = p.pct;
+  try {
+    const o = {sheets: shs.length, n: 0, off: 0, inc: 0, reviewed: 0, issues: 0, pend: 0, last: null};
+    shs.forEach(s => { const t = sheetStats(s); o.n += t.n; o.off += t.offPts; o.inc += t.incPts; o.reviewed += t.reviewed; o.issues += t.issues; o.pend += t.pend; if (t.last && (!o.last || t.last > o.last)) o.last = t.last; });
+    return o;
+  } finally { PCT["In progress"] = sv; }
+}
+// Thumbnail with the planned items coloured by their official status.
+function paintThumb(cv, sh, img) {
+  const g = cv.getContext("2d"); g.fillStyle = img ? "#fff" : "#e4e6e2"; g.fillRect(0, 0, cv.width, cv.height);
+  const W = sh.imgW || (img && img.naturalWidth) || 0, H = sh.imgH || (img && img.naturalHeight) || 0;
+  if (!img || !W) { g.fillStyle = "#666"; g.font = "16px system-ui, sans-serif"; g.textAlign = "center"; g.fillText("Drawing not stored on this device", cv.width / 2, cv.height / 2); return; }
+  const k = Math.min(cv.width / W, cv.height / H), ox2 = (cv.width - W * k) / 2, oy2 = (cv.height - H * k) / 2;
+  g.drawImage(img, ox2, oy2, W * k, H * k);
+  withSheet(sh, () => liveTargets().forEach(t => {
+    const st = itemStatus(t, true), col = st ? STATUS[st] : "#8a8f8c";
+    g.save(); g.fillStyle = col; g.strokeStyle = col; g.lineCap = "round"; g.lineJoin = "round"; g.globalAlpha = .75;
+    const sz = Math.max(5, t.size * k);
+    if (t.shape === "highlight") { g.lineWidth = Math.max(3, t.size * k); g.beginPath(); t.pts.forEach((q, i) => i ? g.lineTo(ox2 + q[0] * k, oy2 + q[1] * k) : g.moveTo(ox2 + q[0] * k, oy2 + q[1] * k)); g.stroke(); }
+    else { g.beginPath(); if (t.shape === "circle") g.arc(ox2 + t.x * k, oy2 + t.y * k, sz / 2, 0, 7); else g.rect(ox2 + t.x * k - sz / 2, oy2 + t.y * k - sz / 2, sz, sz); g.fill(); }
+    g.restore();
+  }));
+}
+function thumbFor(cv, sh) {
+  if (!sh.thumb) return paintThumb(cv, sh, null);
+  const c = thumbCache.get(sh.id);
+  if (c && c.img.complete && c.src === sh.thumb) return paintThumb(cv, sh, c.img);
+  const im = new Image(); im.onload = () => { thumbCache.set(sh.id, {img: im, src: sh.thumb}); paintThumb(cv, sh, im); }; im.src = sh.thumb;
+}
+function trackEl(offPct, incPct) {
+  const t = el("div", "track"), p = el("i", "p"), o = el("i", "o"); p.style.width = incPct + "%"; o.style.width = offPct + "%"; t.append(p, o); return t;
+}
+function badgesEl(st, extra) {
+  const b = el("div", "badges");
+  if (st.issues) b.append(el("span", "badge red", st.issues + " open issue" + (st.issues === 1 ? "" : "s")));
+  if (st.pend) b.append(el("span", "badge amber", st.pend + " awaiting review"));
+  (extra || []).forEach(t => b.append(el("span", "badge", t)));
+  if (st.last) b.append(el("span", "badge", "Last walked " + fmtDay(st.last)));
+  return b;
+}
+function manageRow(buttons) {
+  const d = el("details"), s = el("summary", null, "Manage"); d.append(s);
+  const row = el("div", "row");
+  buttons.forEach(([label, fn, cls]) => { const b = el("button", cls || null, label); b.type = "button"; b.onclick = fn; row.append(b); });
+  d.append(row); return d;
+}
+// ---------- PROJECTS PAGE (home page) ----------
+function projectCard(p, st, archived) {
+  const c = el("div", "scard pcard"), main = el("div", "main"), pad = el("div", "pad");
+  pad.append(el("div", "ttl", p.name));
+  const meta = [p.number ? "No. " + p.number : "", p.location].filter(Boolean).join(" \u00b7 "); if (meta) pad.append(el("div", "meta", meta));
+  if (!archived) {
+    const pct = el("div", "pct", st.n ? rp(st.off / st.n) + "%" : "\u2014"); pct.append(el("small", null, st.n ? "complete" : st.sheets ? "no items planned yet" : "no sheets yet"));
+    pad.append(pct);
+    if (st.n) pad.append(trackEl(rp(st.off / st.n), rp(st.inc / st.n)));
+    pad.append(el("div", "meta", st.sheets + " sheet" + (st.sheets === 1 ? "" : "s") + (st.n ? " \u00b7 " + st.reviewed + " of " + st.n + " items reviewed" : "")));
+    const b = badgesEl({issues: st.issues, pend: st.pend, last: st.last}); if (b.children.length) pad.append(b);
+    main.tabIndex = 0; main.setAttribute("role", "button"); main.setAttribute("aria-label", "Open " + p.name);
+    main.onclick = () => openProject(p.id);
+    main.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProject(p.id); } };
+  } else { pad.append(el("div", "meta", "Archived " + (p.archivedAt ? fmtDay(p.archivedAt) : ""))); main.style.cursor = "default"; }
+  main.append(pad); c.append(main);
+  c.append(manageRow(archived ? [["Restore", () => archiveProject(p, false), "pri"], ["Delete permanently", () => deleteProject(p), "danger"]]
+    : [["Edit details", () => showProjForm(p)], ["Archive", () => archiveProject(p, true)]]));
+  return c;
+}
+function storageText(node) {
+  node.textContent = idbOk ? "Everything is stored in this browser on this device." : "Storage is not available in this browser mode: nothing is being saved.";
+  try { if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then(e => { node.textContent += " Using about " + (e.usage / 1048576).toFixed(1) + " MB" + (e.quota ? " of roughly " + Math.round(e.quota / 1048576) + " MB available." : "."); }); } catch (e) {}
+}
+function renderProjects() {
+  if (view !== "projects") return;
+  const act = projects.filter(p => !p.archived), arch = projects.filter(p => p.archived);
+  const C = $("projCards"); C.innerHTML = "";
+  act.forEach(p => C.append(projectCard(p, projStats(p), false)));
+  if (!act.length) { const t = el("p", "h", projects.length ? "All projects are archived. Restore one below, or start a new project." : "No projects yet. Tap New project to start."); t.style.gridColumn = "1/-1"; C.append(t); }
+  $("archProjBox").hidden = !arch.length; $("archProjSum").textContent = "Archived projects (" + arch.length + ")";
+  const A = $("archProjCards"); A.innerHTML = ""; arch.forEach(p => A.append(projectCard(p, null, true)));
+  storageText($("storeInfo2"));
+}
+let projEditing = null;
+function showProjForm(p) {
+  projEditing = p || null; $("pfTitle").textContent = p ? "Edit project" : "New project";
+  $("pfName").value = p ? p.name : ""; $("pfNumber").value = p ? p.number : ""; $("pfLoc").value = p ? p.location : "";
+  $("pfName").placeholder = "e.g. Biobloom";
+  const copy = $("pfCopy"); copy.innerHTML = ""; copy.add(new Option("Start empty (global defaults)", ""));
+  projects.forEach(q => copy.add(new Option(q.name, q.id)));
+  $("pfCopyRow").hidden = !!p || !projects.length;
+  $("projForm").hidden = false; setTimeout(() => $("pfName").focus(), 50);
+}
+$("newProjBtn").onclick = () => showProjForm(null);
+$("pfCancel").onclick = () => { $("projForm").hidden = true; };
+$("pfSave").onclick = () => {
+  const name = $("pfName").value.trim();
+  if (!name) { $("pfName").placeholder = "A project name is required"; $("pfName").focus(); return; }
+  const number = $("pfNumber").value.trim(), location = $("pfLoc").value.trim();
+  $("projForm").hidden = true;
+  if (projEditing) { Object.assign(projEditing, {name, number, location}); saveProject(projEditing); renderProjects(); return; }
+  const p = newProject(name, number, location, {}), src = projects.find(q => q.id === $("pfCopy").value);
+  if (src) { p.KW = src.KW.map(k => ({...k})); p.SCOPES = src.SCOPES.slice(); p.catMode = {...src.catMode}; p.pct = src.pct; }
+  projects.push(p); saveProject(p); flushNow();
+  openProject(p.id);
+};
+function archiveProject(p, on) {
+  if (on && !confirm("Archive \u201c" + p.name + "\u201d? It is hidden from this page. Its sheets and data are kept, and you can restore it later.")) return;
+  p.archived = on; p.archivedAt = on ? new Date().toISOString() : null; saveProject(p); renderProjects();
+}
+async function deleteProject(p, confirmed) {
+  const shs = allSheets.filter(s => s.projectId === p.id);
+  if (!confirmed && !confirm("Permanently delete \u201c" + p.name + "\u201d with its " + shs.length + " sheet" + (shs.length === 1 ? "" : "s") + ", drawings, plans, updates and photos? This cannot be undone.")) return;
+  projects = projects.filter(x => x !== p); allSheets = allSheets.filter(s => s.projectId !== p.id); projDirty.delete(p.id);
+  if (idbOk) { try { await idbDel("projects", p.id); for (const s of shs) { dirty.delete(s.id); await idbDel("sheets", s.id); await idbDel("images", s.id); for (const ph of s.photos) await idbDel("photos", ph.id); thumbCache.delete(s.id); } } catch (e) { onSaveError(e); } }
+  renderProjects();
+}
+$("wipeAll").onclick = async () => {
+  if (!confirm("Erase ALL projects, sheets, drawings, plans, updates, photos and keywords from this device? This cannot be undone.")) return;
+  if (!confirm("Last check: really erase everything?")) return;
+  await eraseEverything(); renderProjects(); $("projMsg").textContent = "Everything was erased.";
+};
+// ---------- OPEN / LEAVE A PROJECT ----------
+function openProject(id) {
+  const p = projects.find(x => x.id === id && !x.archived); if (!p || curProj) return;
+  curProj = p; KW = p.KW; SCOPES = p.SCOPES; CATMODE = p.catMode; PCT["In progress"] = p.pct;
+  projectName = p.name; projectNumber = p.number; projectLoc = p.location;
+  sheets = allSheets.filter(s => s.projectId === p.id);
+  xKnown.clear(); xSel.clear(); $("homeFilter").value = ""; $("impMsg").textContent = "Import PDFs or images of your drawings. Each sheet keeps its own plan, alignment and updates. Tap a sheet to open it.";
+  renderScopeSelects(); showView("home"); renderHome(); window.scrollTo(0, 0);
+  pushHist("p");
+}
+function leaveProject() {
+  if (!curProj) return;
+  flushNow();
+  curProj = null; sheets = [];
+  KW = DEFAULT_KW.map(k => ({...k})); SCOPES = []; CATMODE = {}; PCT["In progress"] = 50; projectName = projectNumber = projectLoc = "";
+  showView("projects"); renderProjects(); window.scrollTo(0, 0);
+}
+// ---------- BACK BUTTON AND HISTORY ----------
+// The phone's Back button / swipe goes up one level (sheet > project > Projects page), exactly like the on-screen back button.
+const histStack = []; let ignorePops = [];
+function pushHist(tag) { try { history.pushState({wd: tag}, ""); histStack.push(tag); } catch (e) {} }
+function popHist() { if (!histStack.length) return; histStack.pop(); ignorePops.push(Date.now() + 800); try { history.back(); } catch (e) { ignorePops.pop(); } }
+function askLeave() { return !walking || confirm("A walk is in progress. Finish it and go back?"); }
+$("backBtn").onclick = () => {
+  if (view === "sheet") { if (!askLeave()) return; leaveSheet(); popHist(); }
+  else if (curProj) { leaveProject(); popHist(); }
+};
+window.addEventListener("popstate", () => {
+  const now = Date.now(); ignorePops = ignorePops.filter(t => t > now);
+  if (ignorePops.length) { ignorePops.shift(); return; }          // this pop was caused by our own back button
+  if (!histStack.length) return;
+  if (view === "sheet") { if (!askLeave()) { try { history.pushState({wd: "s"}, ""); } catch (e) {} return; } histStack.pop(); leaveSheet(); }
+  else if (curProj) { histStack.pop(); leaveProject(); }
+});
+// ---------- SHEETS TAB ----------
+function sheetCard(sh, st, archived) {
+  const c = el("div", "scard"), cv = document.createElement("canvas");
+  cv.width = 360; cv.height = sh.imgW ? clamp(Math.round(360 * sh.imgH / sh.imgW), 120, 400) : 220;
+  thumbFor(cv, sh);
+  const main = el("div", "main"); main.append(cv);
+  const pad = el("div", "pad");
+  pad.append(el("div", "ttl", sh.name));
+  if (!archived) {
+    const pct = el("div", "pct", st.n ? rp(st.off) + "%" : "\u2014"); pct.append(el("small", null, st.n ? "complete" : "no items planned yet"));
+    pad.append(pct);
+    if (st.n) pad.append(trackEl(rp(st.off), rp(st.inc)));
+    pad.append(el("div", "meta", st.n ? st.reviewed + " of " + st.n + " items reviewed" + (rp(st.inc) !== rp(st.off) ? " (" + rp(st.inc) + "% incl. pending)" : "") : "Open the sheet and use Plan to mark items"));
+    const b = badgesEl(st, sh.hasImage ? [] : ["Drawing missing"]); if (b.children.length) pad.append(b);
+    main.append(pad);
+    main.tabIndex = 0; main.setAttribute("role", "button"); main.setAttribute("aria-label", "Open " + sh.name);
+    main.onclick = () => openSheet(sh.id);
+    main.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openSheet(sh.id); } };
+  } else { pad.append(el("div", "meta", "Archived " + (sh.archivedAt ? fmtDay(sh.archivedAt) : ""))); main.append(pad); main.style.cursor = "default"; }
+  c.append(main);
+  c.append(manageRow(archived ? [["Restore", () => archiveSheet(sh, false), "pri"], ["Delete permanently", () => deleteSheet(sh), "danger"]]
+    : [["Rename", () => renameSheet(sh)], [sh.hasImage ? "Replace drawing" : "Attach drawing", () => { repFile._sh = sh; repFile.click(); }], ["Clear data", () => clearSheetData(sh)], ["Archive", () => archiveSheet(sh, true)]]));
+  return c;
+}
+function renderHome() {
+  if (view !== "home") return;
+  const act = activeSheets(), arch = sheets.filter(s => s.archived);
+  const filter = ($("homeFilter").value || "").trim().toLowerCase();
+  $("homeFilter").hidden = act.length < 6;
+  $("projLine").textContent = [projectNumber ? "No. " + projectNumber : "", projectLoc].filter(Boolean).join(" \u00b7 ");
+  const stats = new Map(act.map(s => [s.id, sheetStats(s)]));
+  const sum = $("homeSum"); sum.innerHTML = "";
+  if (act.length) {
+    let n = 0, off = 0, rev = 0, iss = 0, pend = 0;
+    stats.forEach(s => { n += s.n; off += s.offPts; rev += s.reviewed; iss += s.issues; pend += s.pend; });
+    const tile = (big, small) => { const t = el("div", "tile"); t.append(el("b", null, big), el("span", null, small)); sum.append(t); };
+    tile(n ? rp(off / n) + "%" : "\u2014", "project complete (official)");
+    tile(String(act.length), act.length === 1 ? "sheet" : "sheets");
+    tile(rev + " / " + n, "items reviewed");
+    tile(String(iss), "open issues");
+    tile(String(pend), "awaiting review");
+  }
+  const C = $("cards"); C.innerHTML = "";
+  const shown = act.filter(s => !filter || s.name.toLowerCase().includes(filter));
+  shown.forEach(s => C.append(sheetCard(s, stats.get(s.id), false)));
+  if (!act.length) { const p = el("p", "h", "No sheets yet. Tap Import sheets and choose a PDF or an image of a drawing."); p.style.gridColumn = "1/-1"; C.append(p); }
+  else if (!shown.length) { const p = el("p", "h", "No sheet matches that filter."); p.style.gridColumn = "1/-1"; C.append(p); }
+  $("archBox").hidden = !arch.length; $("archSum").textContent = "Archived sheets (" + arch.length + ")";
+  const A = $("archCards"); A.innerHTML = ""; arch.forEach(s => A.append(sheetCard(s, null, true)));
+}
+$("homeFilter").oninput = renderHome;
+// ---- manage actions ----
+function renameSheet(sh) {
+  const n = prompt("Sheet name", sh.name); if (n == null) return;
+  const v = n.trim(); if (!v) return;
+  sh.name = v; saveSheet(sh); renderHome();
+}
+function archiveSheet(sh, on) {
+  if (on && !confirm("Archive \u201c" + sh.name + "\u201d? It is hidden from Sheets and left out of project totals and exports. You can restore it later.")) return;
+  sh.archived = on; sh.archivedAt = on ? new Date().toISOString() : null; saveSheet(sh); renderHome();
+}
+async function deleteSheet(sh) {
+  if (!confirm("Permanently delete \u201c" + sh.name + "\u201d with its drawing, plan, updates and photos? This cannot be undone.")) return;
+  sheets = sheets.filter(s => s !== sh); allSheets = allSheets.filter(s => s !== sh); dirty.delete(sh.id);
+  if (idbOk) { try { await idbDel("sheets", sh.id); await idbDel("images", sh.id); for (const p of sh.photos) await idbDel("photos", p.id); } catch (e) { onSaveError(e); } }
+  thumbCache.delete(sh.id); renderHome();
+}
+async function clearSheetData(sh) {
+  if (!confirm("Clear the plan, alignment, updates, walks and photos of \u201c" + sh.name + "\u201d? The drawing stays. Export first if you need a copy.")) return;
+  if (idbOk) for (const p of sh.photos) { try { await idbDel("photos", p.id); } catch (e) {} }
+  sh.anchors.length = 0; sh.targets.length = 0; sh.updates.length = 0; sh.walks.length = 0; sh.voiceLogs.length = 0; sh.photos.length = 0;
+  saveSheet(sh); renderHome();
+}
+// ---- import ----
+function parsePages(str, n) {
+  const out = new Set();
+  String(str || "").split(",").forEach(part => {
+    const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/); if (!m) return;
+    let a = +m[1], b = m[2] ? +m[2] : a; if (a > b) [a, b] = [b, a];
+    for (let i = Math.max(1, a); i <= Math.min(n, b); i++) out.add(i);
+  });
+  return [...out].sort((x, y) => x - y);
+}
+function askPages(name, n) {
+  return new Promise(res => {
+    $("pdfTitle").textContent = name; $("pdfInfo").textContent = "This PDF has " + n + " pages. Each page you import becomes its own sheet.";
+    $("pdfPages").value = "1"; $("pdfBox").hidden = false;
+    const done = v => { $("pdfBox").hidden = true; res(v); };
+    $("pdfAll").onclick = () => done(Array.from({length: n}, (_, i) => i + 1));
+    $("pdfSkip").onclick = () => done(null);
+    $("pdfGo").onclick = () => { const p = parsePages($("pdfPages").value, n); if (!p.length) { $("pdfPages").focus(); $("pdfInfo").textContent = "Enter pages between 1 and " + n + ", for example 1-3, 5."; return; } done(p); };
+  });
+}
+async function renderPdfPage(pdf, p) {
+  const pg = await pdf.getPage(p), v0 = pg.getViewport({scale: 1}), v = pg.getViewport({scale: Math.min(3, 2400 / v0.width)});
+  const c = document.createElement("canvas"); c.width = Math.floor(v.width); c.height = Math.floor(v.height);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+  await pg.render({canvasContext: g, viewport: v}).promise;
+  return c;
+}
+// Turns a canvas or <img> into {blob, w, h, thumb} ready to store. Large photos are scaled down to keep storage small.
+async function makePackage(src, w, h, origFile) {
+  const MAXD = 4000; let blob = null, canvas = src, cw = w, ch = h;
+  if (origFile && origFile.size <= 8e6 && Math.max(w, h) <= MAXD && /^image\/(png|jpeg)$/.test(origFile.type)) blob = origFile;
+  else {
+    const k = Math.min(1, MAXD / Math.max(w, h));
+    if (!(src instanceof HTMLCanvasElement) || k < 1) {
+      canvas = document.createElement("canvas"); canvas.width = Math.round(w * k); canvas.height = Math.round(h * k);
+      const g = canvas.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, canvas.width, canvas.height); g.drawImage(src, 0, 0, canvas.width, canvas.height);
+    }
+    cw = canvas.width; ch = canvas.height;
+    blob = await canvasBlob(canvas, "image/png"); if (!blob || blob.size > 14e6) blob = await canvasBlob(canvas, "image/jpeg", 0.9);
+    if (!blob) throw new Error("could not encode the image");
+  }
+  return {blob, w: cw, h: ch, thumb: makeThumb(src, w, h)};
+}
+async function addSheet(pkg, name, srcName, page) {
+  if (!idbOk) throw new Error("storage is not available in this browser mode");
+  const sh = newSheet(name, {projectId: curProj.id, srcName, page: page || null, imgW: pkg.w, imgH: pkg.h, thumb: pkg.thumb, hasImage: true});
+  await idbPut("images", sh.id, pkg.blob);
+  sheets.push(sh); allSheets.push(sh); dirty.add(sh.id); flushNow();
+  return sh;
+}
+const isPdfFile = f => f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+async function importOne(f) {
+  const baseName = f.name.replace(/\.[^.]+$/, "");
+  if (isPdfFile(f)) {
+    const lib = await loadPdfJs(), pdf = await lib.getDocument({data: await f.arrayBuffer()}).promise;
+    const pages = pdf.numPages > 1 ? await askPages(f.name, pdf.numPages) : [1];
+    if (!pages) return 0;
+    let n = 0;
+    for (const p of pages) { const c = await renderPdfPage(pdf, p); await addSheet(await makePackage(c, c.width, c.height, null), pdf.numPages > 1 ? baseName + " (p" + p + ")" : baseName, f.name, p); n++; }
+    return n;
+  }
+  if (!/^image\//.test(f.type)) throw new Error("not a PDF or an image");
+  const im = await loadImg(f);
+  await addSheet(await makePackage(im, im.naturalWidth, im.naturalHeight, f), baseName, f.name, null);
+  return 1;
+}
+async function importFiles(files) {
+  if (importing || !curProj) return;
+  importing = true; $("impBtn").disabled = true;
+  const msg = $("impMsg"); let ok = 0; const fails = [];
+  try {
+    for (let i = 0; i < files.length; i++) {
+      msg.textContent = "Importing " + (i + 1) + " of " + files.length + ": " + files[i].name + "...";
+      try { ok += await importOne(files[i]); } catch (err) { fails.push(files[i].name + " (" + (err && err.message || err) + ")"); }
+    }
+  } finally { importing = false; $("impBtn").disabled = false; }
+  msg.textContent = (ok ? "Imported " + ok + " sheet" + (ok === 1 ? "" : "s") + "." : "Nothing imported.") + (fails.length ? " Problems: " + fails.join("; ") : "");
+  renderHome();
+}
+$("impBtn").onclick = () => { if (!importing) $("impFile").click(); };
+$("impFile").onchange = e => { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) importFiles(fs); };
+$("p-home").addEventListener("dragover", e => e.preventDefault());
+$("p-home").addEventListener("drop", e => { e.preventDefault(); const fs = [...(e.dataTransfer ? e.dataTransfer.files : [])].filter(f => isPdfFile(f) || /^image\//.test(f.type)); if (fs.length) importFiles(fs); });
+// ---- replace / attach a drawing on an existing sheet ----
+const repFile = document.createElement("input"); repFile.type = "file"; repFile.accept = "application/pdf,image/*"; repFile.hidden = true; document.body.append(repFile);
+function scaleSheet(sh, k) {                                   // same drawing at a different pixel size: keep everything in place
+  const sp = o => { if (o && o.x != null) { o.x *= k; o.y *= k; } };
+  sh.targets.forEach(t => { t.x *= k; t.y *= k; t.size *= k; if (t.pts) t.pts = t.pts.map(q => [q[0] * k, q[1] * k]); });
+  sh.anchors.forEach(a => { a.px *= k; a.py *= k; });
+  sh.updates.forEach(u => { sp(u); if (u.rawX != null) { u.rawX *= k; u.rawY *= k; } });
+  sh.walks.forEach(w => (w.trail || []).forEach(sp)); sh.voiceLogs.forEach(sp); sh.photos.forEach(sp);
+}
+async function attachDrawing(sh, f) {
+  let src, w, h, page = null;
+  if (isPdfFile(f)) {
+    const lib = await loadPdfJs(), pdf = await lib.getDocument({data: await f.arrayBuffer()}).promise; page = 1;
+    if (pdf.numPages > 1) { const a = prompt("This PDF has " + pdf.numPages + " pages. Which page is this sheet?", String(sh.page || 1)); if (a == null) return false; page = clamp(parseInt(a, 10) || 1, 1, pdf.numPages); }
+    src = await renderPdfPage(pdf, page); w = src.width; h = src.height;
+  } else { src = await loadImg(f); w = src.naturalWidth; h = src.naturalHeight; }
+  if (sh.imgW && Math.abs((w / h) / (sh.imgW / sh.imgH) - 1) > 0.01 &&
+      !confirm("This drawing is a different shape from the current one, so planned items will not line up with it. Replace it anyway?")) return false;
+  const pkg = await makePackage(src, w, h, isPdfFile(f) ? null : f);
+  if (sh.imgW && pkg.w !== sh.imgW) scaleSheet(sh, pkg.w / sh.imgW);
+  await idbPut("images", sh.id, pkg.blob);
+  Object.assign(sh, {hasImage: true, imgW: pkg.w, imgH: pkg.h, thumb: pkg.thumb, srcName: f.name, page});
+  saveSheet(sh); thumbCache.delete(sh.id); return true;
+}
+repFile.onchange = async () => {
+  const f = repFile.files[0], sh = repFile._sh; repFile.value = ""; if (!f || !sh) return;
+  try { if (await attachDrawing(sh, f)) { $("impMsg").textContent = "Drawing updated for " + sh.name + "."; renderHome(); } } catch (err) { $("impMsg").textContent = "Could not use that file: " + (err && err.message || err); }
+};
+$("attachFile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f || !cur) return;
+  try {
+    if (await attachDrawing(cur, f)) { await loadSheetImage(cur); fit(); draw(); $("attachMsg").textContent = ""; }
+  } catch (err) { $("attachMsg").textContent = "Could not use that file: " + (err && err.message || err); }
+};
+// ---------- OPEN / LEAVE A SHEET ----------
+async function loadSheetImage(sh) {
+  sheetLoaded = false; let blob = null;
+  if (sh.hasImage && idbOk) { try { blob = await idbGet("images", sh.id); } catch (e) {} }
+  if (blob) {
+    try {
+      const im = await loadImg(blob); size(im.naturalWidth, im.naturalHeight);
+      bx.fillStyle = "#fff"; bx.fillRect(0, 0, base.width, base.height); bx.drawImage(im, 0, 0); sheetLoaded = true;
+      if (!sh.imgW) { sh.imgW = base.width; sh.imgH = base.height; saveSheet(sh); }
+    } catch (e) { blob = null; }
+  }
+  if (!blob) {
+    size(sh.imgW || 1000, sh.imgH || 700); bx.fillStyle = "#e4e6e2"; bx.fillRect(0, 0, base.width, base.height);
+    bx.fillStyle = "#666"; bx.font = Math.round(base.width / 28) + "px system-ui, sans-serif"; bx.textAlign = "center"; bx.fillText("Drawing not stored on this device", base.width / 2, base.height / 2);
+  }
+  $("missingBar").hidden = sheetLoaded;
+}
+function bindSheet(sh) {
+  sheetEpoch++; cur = sh; anchors = sh.anchors; targets = sh.targets; updates = sh.updates; walks = sh.walks; voiceLogs = sh.voiceLogs; photos = sh.photos;
+  sheetName = sh.name; T = null; ref = null; pending = null; manual = null; near = null; currentWalk = null;
+  selId = null; planActs = []; hlDraft = []; eraseOn = false; tool = "square"; walking = false; $("go").textContent = "Start walk";
+}
+async function openSheet(id) {
+  const sh = sheets.find(s => s.id === id && !s.archived); if (!sh || cur) return;
+  bindSheet(sh); const epoch = sheetEpoch; sh.lastOpenedAt = new Date().toISOString();
+  $("sheetTitle").textContent = sh.name; $("zoom").value = 100; $("inner").style.width = "100%";
+  $("rptDate").value = ""; $("rptNotes").value = ""; filt.state = "pending"; filt.status = "All";
+  await loadSheetImage(sh);
+  if (cur !== sh || epoch !== sheetEpoch) return;                // the sheet was left while its drawing was loading
+  fit();
+  showView("sheet"); $("sheetTitle").textContent = sh.name;
+  setMode(liveTargets().length ? "walk" : "plan");
+  pushHist("s");
+  loadPhotoData(sh).then(() => { if (cur === sh) { draw(); renderItem(); if (mode === "review") renderList(); } });
+}
+function leaveSheet() {
+  if (!cur) return;
+  sheetEpoch++;
+  if (walking) $("go").click();                                  // finish the walk so it has an end time
+  try { if (rec) rec.stop(); } catch (e) {}
+  saveState(0); flushNow();
+  cur = null; anchors = []; targets = []; updates = []; walks = []; voiceLogs = []; photos = [];
+  T = null; ref = null; near = null; manual = null; pending = null; currentWalk = null; selId = null; hlDraft = []; eraseOn = false;
+  sheetLoaded = false; sheetName = ""; itemCtx = null;
+  showView("home"); renderHome(); window.scrollTo(0, 0);
+}
+// ---------- SETUP ----------
+function openSetup() {
+  renderKeywords(); renderExportUI(); $("projName").value = projectName; $("projNumber").value = projectNumber; $("projLoc").value = projectLoc; $("pPct").value = PCT["In progress"];
+  storageText($("storeInfo"));
+}
+document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-s]").forEach(x => x.classList.toggle("on", x === b));
+  $("s-keys").hidden = b.dataset.s !== "keys"; $("s-export").hidden = b.dataset.s !== "export";
+  if (b.dataset.s === "keys") renderKeywords(); else renderExportUI();
+});
+function projFieldsChanged() {
+  projectName = $("projName").value.trim() || projectName; projectNumber = $("projNumber").value.trim(); projectLoc = $("projLoc").value.trim();
+  if (view === "setup") $("sheetTitle").textContent = projectName || "Project";
+  saveState(600);
+}
+["projName", "projNumber", "projLoc"].forEach(id => { $(id).oninput = projFieldsChanged; });
+$("delProj").onclick = async () => {
+  if (!curProj) return;
+  const p = curProj, n = sheets.length;
+  if (!confirm("Permanently delete \u201c" + p.name + "\u201d with its " + n + " sheet" + (n === 1 ? "" : "s") + ", drawings, plans, updates and photos? This cannot be undone.")) return;
+  leaveProject(); popHist(); await deleteProject(p, true);
+};
+// ---------- MASTER EXPORT (Setup > Master export): project health, issues, selected sheets ----------
+const XTYPES = [["health", "Project health"], ["issues", "Issues"], ["sheets", "Sheets progress"]];
+const XFILE = {health: "project-health", issues: "issues", sheets: "sheets-progress"};
+let xType = "health"; const xSel = new Set(), xKnown = new Set();
+function renderExportUI() {
+  const act = activeSheets();
+  act.forEach(s => { if (!xKnown.has(s.id)) { xKnown.add(s.id); xSel.add(s.id); } });          // new sheets start selected
+  [...xSel].forEach(id => { if (!act.some(s => s.id === id)) xSel.delete(id); });
+  const TY = $("xType"); TY.innerHTML = "";
+  XTYPES.forEach(([k, l]) => TY.append(chipBtn(l, xType === k, () => { xType = k; renderExportUI(); })));
+  $("xSheetsBox").hidden = xType !== "sheets"; $("xStaleRow").hidden = xType !== "health";
+  const L = $("xSheets"); L.innerHTML = "";
+  act.forEach(s => {
+    const r = el("label", "cbrow"), cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = xSel.has(s.id);
+    cb.onchange = () => { if (cb.checked) xSel.add(s.id); else xSel.delete(s.id); };
+    r.append(cb, el("span", null, s.name)); L.append(r);
+  });
+  if (!act.length) L.append(el("p", "h", "No sheets yet. Import sheets on the Sheets tab."));
+  if (!$("xDate").value) $("xDate").value = isoDay(new Date());
+}
+$("xAll").onclick = () => { activeSheets().forEach(s => xSel.add(s.id)); renderExportUI(); };
+$("xNone").onclick = () => { xSel.clear(); renderExportUI(); };
+// ---- numbers (every sheet is run through the same reportData as the daily report) ----
+function projectDays(shs, day) {                                  // the project's walk days: any day any sheet had an update or a walk
+  const set = new Set();
+  shs.forEach(sh => { sh.updates.forEach(u => { if (u.state !== "rejected") set.add(dayOf(u.time)); }); sh.walks.forEach(w => set.add(dayOf(w.startedAt))); });
+  return [...set].filter(d => d < day).sort().slice(-9).concat([day]);
+}
+function sheetBundle(sh, day, o, days) {
+  return withSheet(sh, () => {
+    const R = reportData(day, {stallDays: o.stall}), stats = days.map(d => R.dayStats(d)), E = dayEnd(day);
+    let last = null;
+    walks.forEach(w => { if (new Date(w.startedAt) < E && (!last || w.startedAt > last)) last = w.startedAt; });
+    updates.forEach(u => { if (u.state !== "rejected" && new Date(u.time) < E && (!last || u.time > last)) last = u.time; });
+    const looseMap = R.cur.loose.concat(updates.filter(u => !u.targetId && u.status !== "Issue" && u.status !== "Note" && u.state !== "rejected" && u.x != null && new Date(u.time) < E));
+    const wStart = dayStart(shiftDay(day, -6)), win = R.events(wStart, E);
+    const looseRaised = R.cur.loose.filter(u => new Date(u.time) >= wStart).length;
+    const dayWalks = walks.filter(w => dayOf(w.startedAt) === day).map(w => ({trail: w.trail || []}));
+    return {sh, R, stats, last, looseMap, win, looseRaised, dayWalks};
+  });
+}
+function aggregate(bundles, days) {
+  return days.map((d, i) => {
+    const o = {day: d, n: 0, off: 0, inc: 0, reviewed: 0, openNow: 0, opened: 0, resolved: 0, touched: 0, walksN: 0};
+    bundles.forEach(b => { const s = b.stats[i]; o.n += s.sn.n; o.off += s.sn.off; o.inc += s.sn.inc; o.reviewed += s.sn.reviewed; o.openNow += s.openNow; o.opened += s.opened; o.resolved += s.resolved; o.touched += s.touched; o.walksN += s.walksN; });
+    o.sn = {n: o.n, offPct: o.n ? o.off / o.n : 0, incPct: o.n ? o.inc / o.n : 0, reviewed: o.reviewed};   // same shape the daily report's chart and tables expect
+    return o;
+  });
+}
+function gather(shs, o) {
+  const days = projectDays(shs, o.day), bundles = shs.map(sh => sheetBundle(sh, o.day, o, days));
+  return {bundles, days, rows: aggregate(bundles, days)};
+}
+// ---- shared HTML pieces ----
+const X_CSS = RPT_CSS;
+const xWrap = (title, body) => '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + hx(title) + "</title><style>" + X_CSS + "</style></head><body>" + body + "</body></html>";
+const xHead = (title, o, pill) => '<div class="top"><div><h1>' + hx(title) + '</h1><div class="muted">' + (projLabel() ? hx(projLabel()) + " &middot; " : "") + "As of the end of " + hx(longDay(o.day)) + "</div></div>" + (pill || "") + "</div>";
+const pillH = (txt, bad) => '<span class="pill" style="background:' + (bad ? "#b3261e" : "#1f7a45") + '">' + hx(txt) + "</span>";
+const notesH = o => o.notes && o.notes.trim() ? '<div class="note"><b>Notes from the field</b><br>' + hx(o.notes.trim()) + "</div>" : "";
+const kpiH = (big, label, sub, cls) => '<div class="kpi"><b' + (cls ? ' class="' + cls + '"' : "") + ">" + big + "</b><span>" + label + "</span>" + (sub ? "<br><span>" + sub + "</span>" : "") + "</div>";
+const delta = (now, prev, unit) => prev == null ? "" : ' <em class="' + (now - prev >= 0 ? "up" : "down") + '">' + sgn(now - prev) + (unit || " pts") + "</em>";
+const barH = pct => raw("<b>" + pct + '%</b><div class="pbar"><i style="width:' + pct + '%"></i></div>');
+const ageTxt = a => a <= 0 ? "today" : a + " day" + (a === 1 ? "" : "s");
+const howH = () => '<h2>How to read this report</h2><p class="muted">Progress is the share of planned items, weighted Not started 0%, In progress ' + PCT["In progress"] + '%, Complete 100%, and Issue 0% until a later update resolves it. Official progress counts accepted updates only. Statuses are the latest update as of the end of the chosen day, using the review status at the time the report was generated. Items are counted per sheet and pooled, so a sheet with more planned items weighs more. Due dates come from field notes (for example "tomorrow"). Generated ' + hx(new Date().toLocaleString()) + ".</p>";
+const trendBlock = (rows, day) => (rows.length > 1 ? trendSVG(rows, day) + '<div class="muted">Dark bar = official (accepted); light bar behind = including updates awaiting review.</div>' : "")
+  + tableH(["Day", "Walks", "Items reviewed", "Planned items", "Official progress", "Change", "Issues raised / resolved", "Open issues (end of day)"],
+    rows.slice().reverse().map((r, i, a) => { const pr = a[i + 1]; return [shortDay(r.day) + (r.day === day ? " (this report)" : ""), r.walksN, r.touched, r.sn.n, rp(r.sn.offPct) + "%", pr ? sgn(rp(r.sn.offPct) - rp(pr.sn.offPct)) + " pts" : "-", r.opened + " / " + r.resolved, r.openNow]; }), "No walk history yet.")
+  + (rows.length === 1 ? '<p class="muted">This is the first recorded walk day, so there is nothing earlier to compare with.</p>' : "");
+const withSheetName = (b, list) => list.map(i => ({...i, sheet: b.sh.name}));
+// ---------- PROJECT HEALTH ----------
+function healthHTML(G, o) {
+  const {bundles, days, rows} = G, c = rows[rows.length - 1], p = rows.length > 1 ? rows[rows.length - 2] : null, pi = days.length - 2;
+  const off = rp(c.sn.offPct), poff = p ? rp(p.sn.offPct) : null, ns = bundles.length;
+  const issues = bundles.flatMap(b => withSheetName(b, b.R.openIssues)).sort((a, b) => b.age - a.age || nat(a.sheet, b.sheet) || nat(a.label, b.label));
+  const overdue = bundles.flatMap(b => withSheetName(b, b.R.overdue)).sort((a, b) => b.late - a.late || nat(a.sheet, b.sheet) || nat(a.label, b.label));
+  const stalled = bundles.flatMap(b => withSheetName(b, b.R.stalled)).sort((a, b) => b.idle - a.idle || nat(a.sheet, b.sheet) || nat(a.label, b.label));
+  const pend = bundles.reduce((s, b) => s + b.R.pending.count, 0);
+  const noItems = bundles.filter(b => b.R.cur.sn.n === 0);
+  const stale = bundles.filter(b => b.R.cur.sn.n > 0 && (!b.last || dayDiff(dayOf(b.last), o.day) >= o.stale))
+    .map(b => ({sheet: b.sh.name, last: b.last, idle: b.last ? dayDiff(dayOf(b.last), o.day) : null, pct: rp(b.R.cur.sn.offPct)})).sort((a, b) => (b.idle == null ? 1e9 : b.idle) - (a.idle == null ? 1e9 : a.idle));
+  const walked = bundles.filter(b => b.stats[b.stats.length - 1].touched > 0).length;
+  const S = n => n === 1 ? "" : "s";
+  const L = [];
+  L.push(c.sn.n ? "Overall official progress is " + off + "% across " + c.sn.n + " planned items on " + ns + " sheet" + S(ns) + (p ? " (" + sgn(off - poff) + " pts vs " + shortDay(p.day) + ")" : ", the first recorded day") + ", counting accepted updates only."
+    : "No sheet has planned items yet, so no progress can be calculated.");
+  L.push((walked ? walked + " of " + ns + " sheet" + S(ns) + " " + (walked === 1 ? "was" : "were") + " walked on this date" : "No sheets were walked on this date") + "; " + c.sn.reviewed + " of " + c.sn.n + " planned items have been reviewed overall.");
+  L.push(issues.length ? issues.length + " open issue" + S(issues.length) + " across " + uniq(issues.map(i => i.sheet)).length + " sheet" + S(uniq(issues.map(i => i.sheet)).length) + ". Oldest: " + issues[0].sheet + ", " + issues[0].label + (issues[0].age ? ", open " + ageTxt(issues[0].age) : ", raised on this date") + "." : "There are no open issues.");
+  if (c.opened || c.resolved) L.push((c.opened ? c.opened + " issue" + S(c.opened) + " raised" : "") + (c.opened && c.resolved ? " and " : "") + (c.resolved ? c.resolved + " resolved" : "") + " on this date.");
+  if (pend) L.push(pend + " update" + S(pend) + " awaiting review and not yet counted in official progress.");
+  if (overdue.length) L.push(overdue.length + " item" + S(overdue.length) + " past a due date stated in the field notes.");
+  if (stalled.length) L.push(stalled.length + " item" + S(stalled.length) + " in progress with no update for " + o.stall + "+ days.");
+  if (stale.length) L.push(stale.length + " sheet" + S(stale.length) + " not walked in " + o.stale + "+ days.");
+  if (noItems.length) L.push(noItems.length + " sheet" + S(noItems.length) + " " + (noItems.length === 1 ? "has" : "have") + " no planned items yet.");
+  const sRows = bundles.slice().sort((a, b) => nat(a.sh.name, b.sh.name)).map(b => {
+    const cs = b.R.cur, ps = p ? b.stats[pi] : null, pct = rp(cs.sn.offPct), pp = ps ? rp(ps.sn.offPct) : null;
+    return [b.sh.name, cs.sn.n ? barH(pct) : "\u2014", cs.sn.n, cs.sn.reviewed + " of " + cs.sn.n, pp == null || !cs.sn.n ? "-" : sgn(pct - pp) + " pts", cs.openNow || "0", b.last ? shortDay(dayOf(b.last)) : "Never", b.R.pending.count || "0"];
+  });
+  const cats = {};
+  bundles.forEach(b => Object.entries(b.R.cur.sn.by).forEach(([k, v]) => { const q = cats[k] = cats[k] || {n: 0, off: 0, rev: 0, iss: 0, pn: 0, poff: 0}; q.n += v.n; q.off += v.off; q.rev += v.reviewed; q.iss += v.issues; }));
+  if (p) bundles.forEach(b => Object.entries(b.stats[pi].sn.by).forEach(([k, v]) => { if (cats[k]) { cats[k].pn += v.n; cats[k].poff += v.off; } }));
+  const cRows = Object.keys(cats).sort(nat).map(k => { const q = cats[k], now = rp(q.off / q.n), pp = p && q.pn ? rp(q.poff / q.pn) : null; return [k, q.n, q.rev + " of " + q.n, pp == null ? "-" : pp + "%", now + "%", pp == null ? "-" : sgn(now - pp) + " pts", q.iss || "0"]; });
+  const more = (n, cap) => n > cap ? '<p class="muted">+ ' + (n - cap) + " more. The Issues report lists them all.</p>" : "";
+  return xWrap("Project Health Report " + o.day, [
+    xHead("Project Health Report", o, pillH(issues.length ? issues.length + " open issue" + S(issues.length) : "No open issues", issues.length > 0)),
+    '<div class="kpis">' + kpiH(off + "%", "Overall progress (official)" + delta(off, poff), p ? "vs " + shortDay(p.day) : "first recorded day")
+      + kpiH(ns, "Sheet" + S(ns) + " tracked", walked + " walked on this date")
+      + kpiH(c.sn.reviewed + " / " + c.sn.n, "Items reviewed", c.touched + " reviewed on this date")
+      + kpiH(issues.length, "Open issues", c.opened + " raised, " + c.resolved + " resolved this date")
+      + kpiH(pend, "Updates awaiting review", "not in official progress") + "</div>",
+    '<h2>Overview</h2><ul class="sum">' + L.map(x => "<li>" + hx(x) + "</li>").join("") + "</ul>", notesH(o),
+    "<h2>Progress by sheet</h2>" + tableH(["Sheet", "Complete", "Items", "Reviewed", "Change", "Open issues", "Last walked", "Awaiting review"], sRows, "No sheets."),
+    "<h2>Progress by category (all sheets)</h2>" + tableH(["Category", "Items", "Reviewed", p ? "Prev. " + shortDay(p.day) : "Prev.", "Now", "Change", "Open issues"], cRows, "No planned items."),
+    "<h2>Compared with previous walk days</h2>" + trendBlock(rows, o.day),
+    '<h2>Issues and potential delay drivers</h2><p class="muted">Recorded reasons progress may be held up. There is no schedule baseline, so this shows age and stated due dates rather than days behind plan.</p>',
+    "<h3>Oldest open issues (" + issues.length + " total)</h3>" + tableH(["Sheet", "Item", "Category", "Issue", "Open for", "Review"], issues.slice(0, 10).map(i => [i.sheet, i.label, i.scope, i.note || "(no note)", ageTxt(i.age), i.review ? "Awaiting review" : "Accepted"]), "No open issues.") + more(issues.length, 10),
+    "<h3>Past a stated due date (" + overdue.length + ")</h3>" + tableH(["Sheet", "Item", "Category", "Status", "Due", "Days late"], overdue.slice(0, 15).map(i => [i.sheet, i.label, i.scope, badgeH(i.status === "Not reviewed" ? "Not started" : i.status), shortDay(i.due), i.late]), "None.") + more(overdue.length, 15),
+    "<h3>In progress with no update for " + o.stall + "+ days (" + stalled.length + ")</h3>" + tableH(["Sheet", "Item", "Category", "Last update", "Days idle"], stalled.slice(0, 15).map(i => [i.sheet, i.label, i.scope, shortDay(dayOf(i.since)), i.idle]), "None.") + more(stalled.length, 15),
+    "<h3>Sheets not walked in " + o.stale + "+ days (" + stale.length + ")</h3>" + tableH(["Sheet", "Complete", "Last walked", "Days since"], stale.map(s => [s.sheet, s.pct + "%", s.last ? shortDay(dayOf(s.last)) : "Never", s.idle == null ? "-" : s.idle]), "None."),
+    howH()].join("\n"));
+}
+// ---------- ISSUES ----------
+function issuesHTML(G, o) {
+  const {bundles} = G, S = n => n === 1 ? "" : "s";
+  const open = bundles.flatMap(b => withSheetName(b, b.R.openIssues)).sort((a, b) => b.age - a.age || nat(a.sheet, b.sheet) || nat(a.label, b.label));
+  const resolved = bundles.flatMap(b => b.win.resolved.map(r => ({sheet: b.sh.name, label: r.t.label, scope: r.t.scope, raised: r.openU.time, resolved: r.u.time, days: dayDiff(dayOf(r.openU.time), dayOf(r.u.time)), to: r.u.status}))).sort((a, b) => b.resolved.localeCompare(a.resolved));
+  const raised = bundles.reduce((s, b) => s + b.win.opened.length + b.looseRaised, 0);
+  const sheetsAff = uniq(open.map(i => i.sheet)).length, awaiting = open.filter(i => i.review).length;
+  const buckets = [["0-1 days", a => a <= 1], ["2-3 days", a => a >= 2 && a <= 3], ["4-7 days", a => a >= 4 && a <= 7], ["8+ days", a => a >= 8]];
+  const byCat = {}, bySheet = {}; open.forEach(i => { byCat[i.scope] = (byCat[i.scope] || 0) + 1; bySheet[i.sheet] = (bySheet[i.sheet] || 0) + 1; });
+  const win0 = shiftDay(o.day, -6);
+  return xWrap("Issues Report " + o.day, [
+    xHead("Issues Report", o, pillH(open.length ? open.length + " open issue" + S(open.length) : "No open issues", open.length > 0)),
+    '<div class="kpis">' + kpiH(open.length, "Open issues", sheetsAff + " sheet" + S(sheetsAff) + " affected")
+      + kpiH(open.length ? ageTxt(open[0].age) : "\u2014", "Oldest open issue", open.length ? hx(open[0].sheet + ": " + open[0].label) : "")
+      + kpiH(awaiting, "Open issues awaiting review", "raised but not yet accepted")
+      + kpiH(raised + " / " + resolved.length, "Raised / resolved", shortDay(win0) + " to " + shortDay(o.day)) + "</div>", notesH(o),
+    "<h2>How long issues have been open</h2>" + tableH(["Open for", "Issues"], buckets.map(([l, f]) => [l, open.filter(i => f(i.age)).length]), "None."),
+    "<h2>By category</h2>" + tableH(["Category", "Open issues"], Object.keys(byCat).sort((a, b) => byCat[b] - byCat[a] || nat(a, b)).map(k => [k, byCat[k]]), "No open issues."),
+    "<h2>By sheet</h2>" + tableH(["Sheet", "Open issues"], Object.keys(bySheet).sort((a, b) => bySheet[b] - bySheet[a] || nat(a, b)).map(k => [k, bySheet[k]]), "No open issues."),
+    "<h2>All open issues (" + open.length + ")</h2>" + tableH(["Sheet", "Item", "Category", "Issue", "Raised", "Open for", "Review"], open.map(i => [i.sheet, i.label, i.scope, i.note || "(no note)", shortDay(dayOf(i.since)), ageTxt(i.age), i.review ? "Awaiting review" : "Accepted"]), "No open issues.")
+      + '<p class="muted">"Position only" items are issues logged away from any planned item. They stay open until rejected in Review.</p>',
+    "<h2>Resolved in the last 7 days (" + resolved.length + ")</h2>" + tableH(["Sheet", "Item", "Category", "Raised", "Resolved", "Time to resolve", "Now"], resolved.map(r => [r.sheet, r.label, r.scope, shortDay(dayOf(r.raised)), shortDay(dayOf(r.resolved)) + " " + fmtTime(r.resolved), ageTxt(r.days), badgeH(r.to)]), "None."),
+    howH()].join("\n"));
+}
+// ---------- SELECTED SHEETS ----------
+// Marked-up drawing for any sheet as of the end of the chosen day (loads that sheet's stored drawing).
+async function sheetMapURL(b, maxW) {
+  const sh = b.sh; if (!sh.hasImage || !idbOk) return null;
+  let blob; try { blob = await idbGet("images", sh.id); } catch (e) { return null; } if (!blob) return null;
+  const im = await loadImg(blob), W = im.naturalWidth, sf = Math.min(1, maxW / W), c = document.createElement("canvas");
+  c.width = Math.round(W * sf); c.height = Math.round(im.naturalHeight * sf);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height); g.scale(sf, sf);
+  const r = Math.max(8, W / 90), cur2 = b.R.cur, tfr = computeTransform(sh.anchors), tf = tfr && !tfr.err ? tfr : null;
+  const pxOf = q => (tf && q.lat != null && q.lon != null) ? pxWith(tf, q.lat, q.lon) : (q.x != null ? [q.x, q.y] : null);
+  b.dayWalks.forEach(w => {
+    const tr = w.trail.map(pxOf).filter(Boolean); if (tr.length < 2) return;
+    g.save(); g.globalAlpha = .6; g.strokeStyle = "#1d5fd1"; g.lineWidth = r / 3; g.beginPath(); tr.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke(); g.restore();
+  });
+  cur2.sn.items.forEach(({t, li}) => {
+    const col = li ? STATUS[li.status] || "#8a8f8c" : "#8a8f8c", touched = cur2.touchedIds.has(t.id), dashed = !!(li && li.state === "pending");
+    const path = () => { g.beginPath(); if (t.shape === "highlight") t.pts.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); else if (t.shape === "circle") g.arc(t.x, t.y, t.size / 2, 0, 7); else g.rect(t.x - t.size / 2, t.y - t.size / 2, t.size, t.size); };
+    g.save(); g.lineCap = "round"; g.lineJoin = "round";
+    if (touched) [["#fff", 10], ["#000", 5]].forEach(([k, w]) => { g.strokeStyle = k; g.lineWidth = (t.shape === "highlight" ? t.size : 0) + w + r / 2; path(); g.stroke(); });
+    g.fillStyle = col; g.strokeStyle = col; if (dashed) g.setLineDash([r * .6, r * .5]);
+    if (t.shape === "highlight") { g.globalAlpha = .55; g.lineWidth = t.size; path(); g.stroke(); }
+    else { g.globalAlpha = .6; path(); g.fill(); g.globalAlpha = 1; g.lineWidth = Math.max(2, r / 4); path(); g.stroke(); }
+    g.restore();
+    if (li && li.status === "Issue") { g.save(); g.font = "bold " + Math.round(r * 1.7) + "px system-ui, sans-serif"; g.lineWidth = 4; g.strokeStyle = "#fff"; g.fillStyle = "#a01818"; const lx = t.x + t.size * .6, ly = t.y - t.size * .6; g.strokeText(t.label, lx, ly); g.fillText(t.label, lx, ly); g.restore(); }
+  });
+  b.looseMap.forEach(u => { if (u.x == null) return; g.beginPath(); g.arc(u.x, u.y, r, 0, 7); g.fillStyle = STATUS[u.status] || "#888"; g.fill(); g.lineWidth = 2; g.strokeStyle = "#fff"; g.stroke(); });
+  return c.toDataURL("image/jpeg", 0.8);
+}
+async function sheetsHTML(G, o) {
+  const {bundles, days, rows} = G, c = rows[rows.length - 1], p = rows.length > 1 ? rows[rows.length - 2] : null, pi = days.length - 2, S = n => n === 1 ? "" : "s";
+  const off = rp(c.sn.offPct), poff = p ? rp(p.sn.offPct) : null, sorted = bundles.slice().sort((a, b) => nat(a.sh.name, b.sh.name));
+  const sRow = b => { const cs = b.R.cur, ps = p ? b.stats[pi] : null, pct = rp(cs.sn.offPct), pp = ps ? rp(ps.sn.offPct) : null;
+    return [b.sh.name, cs.sn.n ? barH(pct) : "\u2014", cs.sn.n, cs.sn.reviewed + " of " + cs.sn.n, pp == null || !cs.sn.n ? "-" : sgn(pct - pp) + " pts", cs.openNow || "0", b.last ? shortDay(dayOf(b.last)) : "Never", b.R.pending.count || "0"]; };
+  const tot = ["Total (" + bundles.length + " sheet" + S(bundles.length) + ")", c.sn.n ? barH(off) : "\u2014", c.sn.n, c.sn.reviewed + " of " + c.sn.n, p && c.sn.n ? sgn(off - poff) + " pts" : "-", c.openNow || "0", "", bundles.reduce((s, b) => s + b.R.pending.count, 0) || "0"];
+  const parts = [xHead("Sheets Progress Report", o, pillH(c.openNow ? c.openNow + " open issue" + S(c.openNow) : "No open issues", c.openNow > 0)),
+    '<div class="kpis">' + kpiH(off + "%", "Progress, selected sheets (official)" + delta(off, poff), p ? "vs " + shortDay(p.day) : "first recorded day")
+      + kpiH(bundles.length, "Sheet" + S(bundles.length) + " included", "") + kpiH(c.sn.reviewed + " / " + c.sn.n, "Items reviewed", "") + kpiH(c.openNow, "Open issues", "") + "</div>", notesH(o),
+    "<h2>Summary</h2>" + tableH(["Sheet", "Complete", "Items", "Reviewed", "Change", "Open issues", "Last walked", "Awaiting review"], sorted.map(sRow).concat([tot]), "No sheets selected.")];
+  let first = true;
+  for (const b of sorted) {
+    const cs = b.R.cur, ps = p ? b.stats[pi] : null, pct = rp(cs.sn.offPct), pp = ps ? rp(ps.sn.offPct) : null;
+    const map = await sheetMapURL(b, 1400);
+    const cr = Object.keys(cs.sn.by).sort(nat).map(k => { const v = cs.sn.by[k], pv = ps && ps.sn.by[k], now = rp(v.offPct), pr = pv ? rp(pv.offPct) : null; return [k, v.n, v.reviewed + " of " + v.n, pr == null ? "-" : pr + "%", now + "%", pr == null ? "-" : sgn(now - pr) + " pts", v.issues || "0"]; });
+    const pgCls = first ? "" : "pg"; first = false;                       // every sheet after the first starts on a new printed page
+    parts.push('<div class="' + pgCls + '"><h2>' + hx(b.sh.name) + "</h2>",
+      '<div class="kpis">' + kpiH(cs.sn.n ? pct + "%" : "\u2014", "Complete (official)" + (cs.sn.n ? delta(pct, pp) : ""), cs.sn.n ? cs.sn.reviewed + " of " + cs.sn.n + " items reviewed" : "no planned items")
+        + kpiH(cs.openNow, "Open issues", b.R.pending.count + " update" + S(b.R.pending.count) + " awaiting review") + kpiH(b.last ? shortDay(dayOf(b.last)) : "Never", "Last walked", cs.touched + " item" + S(cs.touched) + " reviewed this date") + "</div>",
+      map ? '<img class="map" alt="Marked-up ' + hx(b.sh.name) + '" src="' + map + '"><div class="leg">' + ["Complete", "In progress", "Issue"].map(k => '<span><i style="background:' + STATUS[k] + '"></i>' + k + "</span>").join("")
+        + '<span><i style="background:#8a8f8c"></i>Not started / not reviewed</span><span><i style="border:2px solid #000;background:#fff"></i>Updated this date</span><span>Dashed outline = awaiting review</span></div>'
+        : '<p class="muted">The drawing for this sheet is not stored on this device, so the marked-up page is not included.</p>',
+      "<h3>By category</h3>" + tableH(["Category", "Items", "Reviewed", p ? "Prev. " + shortDay(p.day) : "Prev.", "Now", "Change", "Open issues"], cr, "No planned items."),
+      "<h3>Open issues (" + b.R.openIssues.length + ")</h3>" + tableH(["Item", "Category", "Issue", "Raised", "Open for", "Review"], b.R.openIssues.map(i => [i.label, i.scope, i.note || "(no note)", shortDay(dayOf(i.since)), ageTxt(i.age), i.review ? "Awaiting review" : "Accepted"]), "No open issues."), "</div>");
+  }
+  parts.push("<h2>Compared with previous walk days (selected sheets)</h2>" + trendBlock(rows, o.day), howH());
+  return xWrap("Sheets Progress Report " + o.day, parts.join("\n"));
+}
+// ---------- run ----------
+function xOpts() {
+  return {day: $("xDate").value, stall: clamp(parseInt($("xStall").value, 10) || 3, 1, 30), stale: clamp(parseInt($("xStale").value, 10) || 7, 1, 60), notes: $("xNotes").value};
+}
+async function buildExport() {
+  const msg = $("xMsg"), o = xOpts(); msg.textContent = "";
+  if (!o.day) { msg.textContent = "Pick a date first."; return null; }
+  const act = activeSheets(), shs = xType === "sheets" ? act.filter(s => xSel.has(s.id)) : act;
+  if (!shs.length) { msg.textContent = xType === "sheets" ? "Select at least one sheet." : "There are no sheets to report on yet."; return null; }
+  $("xPrev").disabled = $("xDl").disabled = true; msg.textContent = "Building report...";
+  try {
+    const G = gather(shs, o), html = xType === "health" ? healthHTML(G, o) : xType === "issues" ? issuesHTML(G, o) : await sheetsHTML(G, o);
+    const noPlan = G.bundles.filter(b => !b.R.cur.sn.n).length, noDraw = xType === "sheets" ? G.bundles.filter(b => !b.sh.hasImage).length : 0;
+    msg.textContent = (noPlan ? noPlan + " sheet" + (noPlan === 1 ? " has" : "s have") + " no planned items. " : "") + (noDraw ? noDraw + " sheet" + (noDraw === 1 ? " has" : "s have") + " no stored drawing, so no marked-up page. " : "");
+    const slug = (projectName || "project").replace(/[^\w.-]+/g, "_");
+    return {R: {day: o.day}, html, fname: "walkdown-" + slug + "-" + XFILE[xType] + "-" + o.day + ".html"};
+  } catch (err) { console.warn(err); msg.textContent = "Could not build the report: " + (err && err.message || err); return null; }
+  finally { $("xPrev").disabled = $("xDl").disabled = false; }
+}
+$("xPrev").onclick = async () => { const r = await buildExport(); if (!r) return; lastReport = r; $("rptFrame").srcdoc = r.html; $("rptView").hidden = false; };
+$("xDl").onclick = async () => { const r = await buildExport(); if (r) dl(r.fname, new Blob([r.html], {type: "text/html"})); };
+$("xCsv").onclick = () => {
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["project", "sheet", "sheet_archived", "time", "walk_id", "source", "item", "category", "status", "state", "note", "due", "transcript", "x_px", "y_px", "lat", "lon"]];
+  sheets.forEach(sh => sh.updates.forEach(u => rows.push([projectName, sh.name, sh.archived ? "yes" : "no", u.time, u.walkId, u.source || "voice", u.item, u.scope, u.status, u.state, u.note, u.due, u.text, u.x, u.y, u.lat, u.lon])));
+  if (rows.length === 1) { $("xMsg").textContent = "There are no updates to export yet."; return; }
+  dl("walkdown-" + (projectName || "project").replace(/[^\w.-]+/g, "_") + "-all-updates-" + isoDay(new Date()) + ".csv", new Blob(["\uFEFF" + rows.map(r => r.map(q).join(",")).join("\r\n")], {type: "text/csv"}));
+  $("xMsg").textContent = (rows.length - 1) + " updates exported.";
+};
+// ---------- START ----------
+(async function boot() {
+  try { idb = await idbOpen(); idbOk = !!idb; } catch (e) { idbOk = false; }
+  if (idbOk) { try { await loadAll(); } catch (e) { console.warn("Load failed", e); } }
+  else {
+    $("storeWarn").hidden = false;
+    if (dbBlocked) $("storeWarn").textContent = "Another Walkdown tab (or an older copy of the app) is open and is blocking this update. Close the other tab, then reload this page.";
+  }
+  renderScopeSelects(); setGpsBtn(); showView("projects"); renderProjects();
+  try { if (localStorage.getItem(GPS_KEY) === "1") startGps(); } catch (e) {}     // GPS was on last time: resume it
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>
